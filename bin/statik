@@ -1,0 +1,49 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use File::Basename;
+use Getopt::Long qw(:config no_ignore_case bundling);
+use Config::Tiny;
+
+use FindBin qw($Bin);
+use lib "$Bin/../lib";
+use Statik::Config;
+use Statik::Plugins;
+use Statik::Generator;
+
+sub usage {
+  warn @_ if @_;
+  die "usage: " . basename($0) . " [-v] [--config <config>]\n";
+}
+
+$|++;
+
+my $verbose = 0;
+my ($help, $config_file);
+usage unless GetOptions(
+  'help|h|?'        => \$help,
+  'verbose|v+'      => \$verbose,
+  'config|c=s'      => \$config_file,
+);
+usage if $help;
+usage if @ARGV;
+
+# Load config file
+my $config = Statik::Config->new(file => $config_file);
+
+# Load plugins
+my $plugins = Statik::Plugins->new(config => $config);
+
+# Load entries from post_dir
+my $entries = $plugins->first('entries');
+my ($files, $indexes) = $entries->(config => $config);
+
+# Generate static pages
+my $gen = Statik::Generator->new(
+  config    => $config, 
+  plugins   => $plugins,
+  files     => $files,
+);
+$gen->generate_all(indexes => $indexes);
+
