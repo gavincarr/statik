@@ -28,6 +28,8 @@ sub defaults {
     entries_index             => 'entries_default.index',
     # Whether to follow symlinks in posts directory
     follow_symlinks           => 0,
+    # Optional flag file (or directory) updated on new/updated/deleted posts
+    posts_flag                => '',
     # Post header to check for timestamp, overriding mtime if set
     post_timestamp_header     => '',
     # Post timestamp strptime(1) format (required if post_timestamp_header is set)
@@ -68,6 +70,25 @@ sub entries {
   }
   else {
     warn "[entries_default] no entries index '$self->{entries_index}' found\n";
+  }
+
+  # Check posts_flag if set
+  if ($self->{posts_flag}) {
+    if (-e $self->{posts_flag}) {
+      my $flag_mtime = stat($self->{posts_flag})->mtime;
+      if ($flag_mtime <= $max_mtime) {
+        # debug(1, "flag_mtime $flag_mtime < max_mtime $max_mtime - no new posts, skipping checks");
+        return ($files, {});
+      }
+      else {
+        # debug(1, "flag_mtime $flag_mtime > max_mtime $max_mtime - doing full check");
+        $max_mtime = $flag_mtime;
+        $self->{updates_flag}++; 
+      }
+    }
+    else {
+      warn "[entries_default] posts_flag '$self->{posts_flag}' not found!\n";
+    }
   }
 
   # Check for deleted files
@@ -194,7 +215,7 @@ sub end {
 
   # If updates, save back to index
   if ($self->{updates_flag}) {
-    # debug(1, "$self->{updates_flag} updates, saving indices to $self->{index_file}");
+    # debug(1, "$self->{updates_flag} update(s), saving data to $self->{entries_index}");
     if (open my $index, '>', "$self->{index_file}.tmp") {
       print $index to_json({ 
         files => $self->{files},
@@ -223,6 +244,10 @@ entries_default: statik plugin to capture and preserve the original
 creation timestamp on posts
 
 =head1 SYNOPSIS
+
+To configure, add some or all of the following to your statik.conf:
+
+=head1 DESCRIPTION
 
 entries_default is a statik plugin for capturing and preserving the
 original creation timestamp on posts. It maintains an index file
