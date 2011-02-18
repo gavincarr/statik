@@ -8,7 +8,7 @@ use YAML;
 use FindBin qw($Bin);
 use lib "$Bin/../lib";
 use Statik::Config;
-use Statik::Plugins;
+use Statik::PluginList;
 #use Statik::Generator;
 
 $|++;
@@ -27,7 +27,7 @@ my $config = Statik::Config->new(file => $opt->config);
 print Dump $config if $opt->verbose >= 2;
 
 # Load plugins
-my $plugins = Statik::Plugins->new(config => $config);
+my $plugins = Statik::PluginList->new(config => $config);
 print Dump $plugins if $opt->verbose >= 2;
 
 # Load entries from post_dir
