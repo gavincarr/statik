@@ -1,0 +1,13 @@
+statik is a minimalist static blogging engine inspired by blosxom.
+Posts are simple text files with headers, which are used to generate
+static web pages (html, atom, etc.) to be served by a standard
+webserver like apache or nginx.
+
+No databases or dynamic web infrastructure is required, meaning you
+can host your blog on a cheap and nasty vps and still have it perform
+like a star when you're slashdotted. The only real requirements are
+perl >= 5.8.
+
+Dynamic elements, like comments and comment threads, are possible
+with javascript.
+
