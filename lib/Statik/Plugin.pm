@@ -17,7 +17,7 @@ sub new {
 
   # Initialise
   $self->{name} = ref $self;
-  my $plugin_config = merge( $self->{config}->{ $self->{name} }, $self->defaults );
+  my $plugin_config = merge( $self->{config}->{$self->{name}}||{}, $self->defaults );
   for (qw(config name)) {
     die "Can't use reserved attribute '$_' as $self->{name} config item"
       if exists $plugin_config->{$_};
