@@ -12,11 +12,14 @@ sub new {
   my %arg = @_;
   $class = ref $class if ref $class;
 
+  # Defaults
   my $self = bless { 
-    _file       => $arg{file} || File::Spec->catfile($Bin, File::Spec->updir, 'config', 'statik.conf'),
-    post_dir    => "posts",
-    static_dir  => "static",
-    state_dir   => "state",
+    _file           => $arg{file} || File::Spec->catfile($Bin, File::Spec->updir, 'config', 'statik.conf'),
+    post_dir        => "posts",
+    static_dir      => "static",
+    state_dir       => "state",
+    index_flavours  => 'html,atom',
+    post_flavours   => 'html',
   }, $class;
   $self->{_file} = realpath($self->{_file});
 
@@ -35,6 +38,7 @@ sub new {
   delete $self->{_config}->{_};
 
   $self->_qualify_paths;
+  $self->_split_composites;
 
   $self;
 }
@@ -62,6 +66,16 @@ sub _qualify_paths {
     else {
       $self->{$_} = File::Spec->rel2abs( $self->{$_}, $self->{base_dir} );
     }
+  }
+}
+
+# Split composite values into arrayrefs
+sub _split_composites {
+  my $self = shift;
+
+  # Comma-separated composites
+  for (qw(index_flavours post_flavours)) {
+    $self->{$_} = [ split /\s*,\s*/, $self->{$_} ];
   }
 }
 
