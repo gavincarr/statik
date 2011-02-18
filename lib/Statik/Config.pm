@@ -2,8 +2,10 @@ package Statik::Config;
 
 use strict;
 use FindBin qw($Bin);
+use Cwd qw(realpath);
+use File::Spec;
+use File::Basename;
 use Config::Tiny;
-use Carp;
 
 sub new {
   my $class = shift;
@@ -11,10 +13,12 @@ sub new {
   $class = ref $class if ref $class;
 
   my $self = bless { 
-    _file       => $arg{file} || "$Bin/../config/statik.conf",
-    post_dir    => "$Bin/../posts",
-    static_dir  => "$Bin/../static",
+    _file       => $arg{file} || File::Spec->catfile($Bin, File::Spec->updir, 'config', 'statik.conf'),
+    post_dir    => "posts",
+    static_dir  => "static",
+    state_dir   => "state",
   }, $class;
+  $self->{_file} = realpath($self->{_file});
 
   -f $self->{_file}
     or die "Config file '$self->{_file}' not found\n";
@@ -22,12 +26,43 @@ sub new {
     or die "Read of '$self->{_file} failed\n";
 
   # Promote all _config->{_} keys to top-level
+  my $val;
   for (keys %{$self->{_config}->{_}}) {
-    $self->{$_} = delete $self->{_config}->{_}->{$_};
+    if (defined($val = delete $self->{_config}->{_}->{$_})) {
+      $self->{$_} = $val if $val ne '';
+    }
   }
   delete $self->{_config}->{_};
 
+  $self->_qualify_paths;
+
   $self;
+}
+
+# Qualify any relative top-level paths
+sub _qualify_paths {
+  my $self = shift;
+
+  # Default base_dir to parent directory of config file dir
+  $self->{base_dir} ||= realpath(File::Spec->catdir( dirname( $self->{_file} ), File::Spec->updir ));
+
+  for ($self->keys) {
+    next unless m/_(dir|list|path)$/;
+    next if $_ eq 'base_dir';
+
+    # For paths, qualify all elements, and store as an arrayref
+    if (m/_path$/) {
+      my $path = $self->{$_};
+      $self->{$_} = [];
+      for my $elt (split /[:;]/, $path) {
+        push @{$self->{$_}}, File::Spec->rel2abs( $elt, $self->{base_dir} );
+      }
+    }
+
+    else {
+      $self->{$_} = File::Spec->rel2abs( $self->{$_}, $self->{base_dir} );
+    }
+  }
 }
 
 sub keys {
