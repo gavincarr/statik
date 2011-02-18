@@ -2,42 +2,42 @@
 
 use strict;
 use warnings;
-use File::Basename;
-use Getopt::Long qw(:config no_ignore_case bundling);
-use Config::Tiny;
+use Getopt::Long::Descriptive;
+use YAML;
 
 use FindBin qw($Bin);
 use lib "$Bin/../lib";
 use Statik::Config;
 use Statik::Plugins;
-use Statik::Generator;
-
-sub usage {
-  warn @_ if @_;
-  die "usage: " . basename($0) . " [-v] [--config <config>]\n";
-}
+#use Statik::Generator;
 
 $|++;
 
-my $verbose = 0;
-my ($help, $config_file);
-usage unless GetOptions(
-  'help|h|?'        => \$help,
-  'verbose|v+'      => \$verbose,
-  'config|c=s'      => \$config_file,
+my ($opt, $usage) = describe_options(
+  '%c %o',
+  [ 'config|c=s'    => '<config_file> - statik config file' ],
+  [ 'verbose|v+'    => 'print more verbose output' ],
+  [ 'help|h|?'      => 'print usage message and exit' ],
 );
-usage if $help;
-usage if @ARGV;
+print($usage->text), exit if $opt->help;
+print($usage->text), exit if @ARGV;
 
 # Load config file
-my $config = Statik::Config->new(file => $config_file);
+my $config = Statik::Config->new(file => $opt->config);
+print Dump $config if $opt->verbose >= 2;
 
 # Load plugins
 my $plugins = Statik::Plugins->new(config => $config);
+print Dump $plugins if $opt->verbose >= 2;
 
 # Load entries from post_dir
+print "+ Loading entries from $config->{post_dir}\n" if $opt->verbose;
 my $entries = $plugins->first('entries');
-my ($files, $indexes) = $entries->(config => $config);
+my ($files, $updates) = $entries->entries(config => $config);
+printf "+ Found %d post files, %d updated\n", 
+  scalar keys %$files, scalar keys %$updates if $opt->verbose;
+
+__END__
 
 # Generate static pages
 my $gen = Statik::Generator->new(
