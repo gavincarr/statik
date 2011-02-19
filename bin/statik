@@ -9,13 +9,15 @@ use FindBin qw($Bin);
 use lib "$Bin/../lib";
 use Statik::Config;
 use Statik::PluginList;
-#use Statik::Generator;
+use Statik::Generator;
 
 $|++;
 
 my ($opt, $usage) = describe_options(
   '%c %o',
   [ 'config|c=s'    => '<config_file> - statik config file' ],
+  [ 'noop|n'        => "don't do updates, just show what would be done", 
+                       { implies => { verbose => 1 } } ],
   [ 'verbose|v+'    => 'print more verbose output' ],
   [ 'help|h|?'      => 'print usage message and exit' ],
 );
@@ -30,26 +32,26 @@ print Dump $config if $opt->verbose >= 2;
 my $plugins = Statik::PluginList->new(config => $config);
 print Dump $plugins if $opt->verbose >= 2;
 
+#my ($template_sub) = $plugins->call_first('template');
+
 # Hook: entries
 print "+ Loading entries from $config->{post_dir}\n" if $opt->verbose;
-my $entries = $plugins->first('entries');
-my ($files, $updates) = $entries->entries(config => $config);
+my ($files, $updates) = $plugins->call_first('entries', config => $config);
 printf "+ Found %d post files, %d updated\n", 
   scalar keys %$files, scalar keys %$updates if $opt->verbose;
 
-
-# Hook: end
-for my $plugin ($plugins->plugins('end')) {
-  $plugin->end;
-}
-
-__END__
-
 # Generate static pages
 my $gen = Statik::Generator->new(
-  config    => $config, 
+  config    => $config,
   plugins   => $plugins,
   files     => $files,
+  verbose   => $opt->verbose,
+  noop      => $opt->noop,
 );
-$gen->generate_all(indexes => $indexes);
+$gen->generate_updates(updates => $updates);
+
+# Hook: end
+$plugins->call_all('end');
+
+__END__
 
