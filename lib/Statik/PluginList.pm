@@ -5,6 +5,7 @@ use Carp;
 
 my @DEFAULT_PLUGIN_LIST = qw(
   entries_default
+  Statik::Plugin::Theme
 );
 
 sub new {
@@ -30,6 +31,7 @@ sub _load_plugins {
 
   # Get list of plugins from plugin_list
   my @plugins = ();
+  my %plugins = ();
   if (-f $self->{plugin_list}) {
     open my $fh, '<', $self->{plugin_list}
       or die "Cannot open plugin list: $!\n";
@@ -38,17 +40,20 @@ sub _load_plugins {
       next if m/^#/ || m/^\s*$/;
 
       # Trim entries
+      chomp;
       s/^\s+//;
       s/\s*#.*$//;
 
       push @plugins, $_;
+      $plugins{$_} = 1;
     }
   }
-
   else {
-    warn "Plugin list '$self->{plugin_list}' not found - loading defaults\n";
-    @plugins = @DEFAULT_PLUGIN_LIST;
+    warn "Plugin list '$self->{plugin_list}' not found - using defaults\n";
   }
+
+  # Add default plugins if not already included
+  push @plugins, grep { ! $plugins{$_} } @DEFAULT_PLUGIN_LIST;
 
   # Load all plugins
   $self->{plugins} = [];
@@ -83,10 +88,33 @@ sub plugins {
   }
 }
 
+# Return the first defined plugin with the given $hook
 sub first {
-  my $self = shift;
-  my @p = $self->plugins(@_);
+  my ($self, $hook) = @_;
+
+  my @p = $self->plugins($hook);
+  return unless @p;
+
   return $p[0];
+}
+
+# Call the given hook routine with @args for all plugins until one returns results
+sub call_first {
+  my ($self, $hook, @args) = @_;
+
+  for my $plugin ($self->plugins($hook)) {
+    my @results = $plugin->$hook(@args);
+    return @results if @results;
+  }
+}
+
+# Call all the given hook routines with @args for all plugins
+sub call_all {
+  my ($self, $hook, @args) = @_;
+
+  for my $plugin ($self->plugins($hook)) {
+    $plugin->$hook(@args);
+  }
 }
 
 1;
