@@ -25,6 +25,9 @@ sub new {
   }
   $self->{$_} = $plugin_config->{$_} foreach keys %$plugin_config;
 
+  # Call start() if exists
+  $self->start if $self->can('start');
+
   $self;
 }
 
