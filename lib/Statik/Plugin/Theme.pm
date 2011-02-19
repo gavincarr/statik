@@ -1,4 +1,4 @@
-# Statik Plugin: entries_default
+# Statik Plugin: Statik::Plugin::Theme
 # Author(s): Gavin Carr <gavin@openfusion.com.au>
 # Version: 0.001
 # Documentation: see bottom of file or type 'perldoc Statik::Plugin::Theme'
@@ -30,6 +30,12 @@ sub defaults {
 sub start {
   my $self = shift;
   $self->{cache} = {};
+
+  # Qualify config items if required
+  $self->{theme_dir} = "$self->{config}->{base_dir}/$self->{theme_dir}"
+    if substr($self->{theme_dir},0,1) ne '/';
+  $self->{theme_dir_url} = "$self->{config}->{url}/$self->{theme_dir_url}"
+    if substr($self->{theme_dir_url},0,1) ne '/';
 }
 
 # Template hook - return a subroutine that takes named 'flavour', 'theme' and 
