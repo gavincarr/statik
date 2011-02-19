@@ -16,7 +16,7 @@ use Time::Piece;
 use JSON;
 
 # Uncomment next line to enable debug output (don't uncomment debug() lines)
-use Blosxom::Debug debug_level => 1;
+#use Blosxom::Debug debug_level => 1;
 
 # -------------------------------------------------------------------------
 # Configuration defaults. To change, add an [entries_default] section to 
@@ -77,7 +77,7 @@ sub entries {
     if (-e $self->{posts_flag}) {
       my $flag_mtime = stat($self->{posts_flag})->mtime;
       if ($flag_mtime <= $max_mtime) {
-        # debug(1, "flag_mtime $flag_mtime < max_mtime $max_mtime - no new posts, skipping checks");
+        # debug(1, "flag_mtime $flag_mtime <= max_mtime $max_mtime - no new posts, skipping checks");
         return ($files, {});
       }
       else {
