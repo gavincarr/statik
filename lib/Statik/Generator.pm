@@ -21,6 +21,16 @@ sub new {
 
   ($self->{template_sub}) = $self->{plugins}->call_first('template')
     or die "No template plugin found - aborting";
+  $self->{interpolate_sub} = sub {
+    my %arg = @_;
+    my $template = delete $arg{template};
+    my $stash = delete $arg{stash};
+
+    # Interpolate simple $name variables if found in stash
+    $template =~ s/\$(\w+)/defined $stash->{$1} ? $stash->{$1} : ''/ge;
+
+    return $template;
+  };
 
   $self;
 }
@@ -107,10 +117,12 @@ sub _generate_page {
 
   my $output = '';
   my $template_sub = $self->{template_sub};
+  my $interpolate_sub = $self->{interpolate_sub};
+  my $stash = $self->{config}->to_stash;
 
   # Head
   my $head_tmpl = $template_sub->( chunk => 'head', flavour => $flavour, theme => $theme );
-  $output .= $head_tmpl;
+  $output .= $interpolate_sub->( template => $head_tmpl, stash => $stash );
 
   # Posts
   my $post_tmpl = $template_sub->( chunk => 'post', flavour => $flavour, theme => $theme );
@@ -125,12 +137,17 @@ sub _generate_page {
       headers       => \{$post->headers},
       body          => \{$post->body},
     );
-    $output .= $post_tmpl;
+
+    # Update stash with post data
+    $stash->{"header_\L$_"} = $post->headers->{$_} foreach keys %{$post->{headers}};
+    $stash->{body} = $post->body;
+
+    $output .= $interpolate_sub->( template => $post_tmpl, stash => $stash );
   }
 
   # Foot
   my $foot_tmpl = $template_sub->( chunk => 'foot', flavour => $flavour, theme => $theme );
-  $output .= $foot_tmpl;
+  $output .= $interpolate_sub->( template => $foot_tmpl, stash => $stash );
 
   print "\n$output\n" if $post_file;
   return $output if $output;
