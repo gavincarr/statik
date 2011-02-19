@@ -1,14 +1,17 @@
 0.1
 o config loading
 o post traversal
+o add initial end support to statik
 o add optional posts_flag support to entries_default, for signalling new/updated/deleted posts without a full check
+o write a first-pass Generator 
 
-- refactor entries_default to do removes on find leftovers, rather than as separate loop
-- add initial end support to statik
-- write a first-pass Generator 
-- top-level index page generation
-- sub-directory index page generation
+- add initial interpolation to Generator
+- add file output to Generator
+- add initial index page generation to Generator
+- rename entries_default to Statik::Plugin::Entries
 
 0.2
 - leaf page generation
+- refactor entries_default to do removes on find leftovers, rather than as separate loop
+- move statik run code to Statik::run
 

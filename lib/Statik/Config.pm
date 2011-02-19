@@ -19,7 +19,6 @@ sub new {
     static_dir      => "static",
     state_dir       => "state",
     index_flavours  => 'html,atom',
-    post_flavours   => 'html',
   }, $class;
   $self->{_file} = realpath($self->{_file});
 
