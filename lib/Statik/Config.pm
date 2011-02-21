@@ -7,6 +7,14 @@ use File::Spec;
 use File::Basename;
 use Config::Tiny;
 use Encode qw(decode);
+use Hash::Merge qw(merge);
+
+my %main_booleans    = map { $_ => 1 } qw(show_future_entries);
+my %flavour_booleans = map { $_ => 1 } qw(xml_escape);
+my %flavour_defaults = (
+  theme         => 'default',
+  xml_escape    => 1,
+);
 
 sub new {
   my $class = shift;
@@ -15,15 +23,17 @@ sub new {
 
   # Defaults
   my $self = bless { 
-    _file           => $arg{file} || File::Spec->catfile($Bin, File::Spec->updir, 'config', 'statik.conf'),
-    blog_language   => 'en',
-    blog_encoding   => 'utf-8',
-    post_dir        => "posts",
-    static_dir      => "static",
-    state_dir       => "state",
-    index_flavours  => 'html,atom',
-    posts_per_page  => 20,
-    max_pages       => 1,
+    _file                   => $arg{file} || 
+      File::Spec->catfile($Bin, File::Spec->updir, 'config', 'statik.conf'),
+    blog_language           => 'en',
+    blog_encoding           => 'utf-8',
+    post_dir                => "posts",
+    static_dir              => "static",
+    state_dir               => "state",
+    index_flavours          => 'html,atom',
+    posts_per_page          => 20,
+    max_pages               => 1,
+    show_future_entries     => 0,
   }, $class;
   $self->{_file} = realpath($self->{_file});
 
@@ -43,6 +53,8 @@ sub new {
 
   $self->_qualify_paths;
   $self->_split_composites;
+  $self->_map_booleans;
+  $self->_clean_flavours;
 
   $self;
 }
@@ -80,6 +92,34 @@ sub _split_composites {
   # Comma-separated composites
   for (qw(index_flavours post_flavours)) {
     $self->{$_} = [ split /\s*,\s*/, $self->{$_} ];
+  }
+}
+
+sub _map_booleans {
+  my $self = shift;
+  for (keys %main_booleans) {
+    $self->{$_} = 1, next if $self->{$_} =~ m/^(yes|on)/;
+    $self->{$_} = 0, next if $self->{$_} =~ m/^(no|off)/;
+  }
+}
+
+sub _clean_flavours {
+  my $self = shift;
+
+  for my $key (keys %{$self->{_config}}) {
+    next unless $key =~ m/^flavour:(\w+)/;
+    my $flavour = $1;
+    $self->{_config}->{$key}->{suffix} ||= $flavour;
+
+    my $fconfig = merge($self->{_config}->{$key}, \%flavour_defaults);
+
+    # Convert booleans
+    for (keys %flavour_booleans) {
+      $fconfig->{$_} = 1, next if $fconfig->{$_} =~ m/^(yes|on)/;
+      $fconfig->{$_} = 0, next if $fconfig->{$_} =~ m/^(no|off)/;
+    }
+
+    $self->{_config}->{$key} = $fconfig;
   }
 }
 
