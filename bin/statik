@@ -16,6 +16,7 @@ $|++;
 my ($opt, $usage) = describe_options(
   '%c %o',
   [ 'config|c=s'    => '<config_file> - statik config file' ],
+  [ 'force|f'       => 'force all entries to be regenerated' ],
   [ 'noop|n'        => "don't do updates, just show what would be done", 
                        { implies => { verbose => 1 } } ],
   [ 'verbose|v+'    => 'print more verbose output' ],
@@ -26,6 +27,7 @@ print($usage->text), exit if @ARGV;
 
 # Load config file
 my $config = Statik::Config->new(file => $opt->config);
+$config->{$_} = $opt->$_ foreach qw(force noop verbose);
 print Dump $config if $opt->verbose >= 2;
 
 # Load plugins
