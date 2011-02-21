@@ -128,21 +128,11 @@ sub _generate_page {
   my $post_tmpl = $template_sub->( chunk => 'post', flavour => $flavour, theme => $theme );
   # Single post
   if ($post_file) {
-    my $post = Statik::Parser->new( file => "$self->{config}->{post_dir}/$post_file" );
+    $output .= $self->_generate_post(post_file => $post_file, post_template => $post_tmpl, stash => $stash);
+  }
 
-    # Post hook
-    $self->{plugins}->call_all('post',
-      path          => $post,
-      template      => \$post_tmpl,
-      headers       => \{$post->headers},
-      body          => \{$post->body},
-    );
-
-    # Update stash with post data
-    $stash->{"header_\L$_"} = $post->headers->{$_} foreach keys %{$post->{headers}};
-    $stash->{body} = $post->body;
-
-    $output .= $interpolate_sub->( template => $post_tmpl, stash => $stash );
+  # Index pages (multi-post)
+  else {
   }
 
   # Foot
@@ -151,6 +141,36 @@ sub _generate_page {
 
   print "\n$output\n" if $post_file;
   return $output if $output;
+}
+
+sub _generate_post {
+  my ($self, %arg) = @_;
+
+  # Check arguments
+  my $post_file = delete $arg{post_file}
+    or croak "Required argument 'post_file' missing";
+  my $post_tmpl = delete $arg{post_template}
+    or croak "Required argument 'post_template' missing";
+  my $stash = delete $arg{stash}
+    or croak "Required argument 'stash' missing";
+# $stash = $self->{config}->to_stash;
+
+  # Parse post
+  my $post = Statik::Parser->new( file => "$self->{config}->{post_dir}/$post_file" );
+
+  # Post hook
+  $self->{plugins}->call_all('post',
+    path          => $post,
+    template      => \$post_tmpl,
+    headers       => \{$post->headers},
+    body          => \{$post->body},
+  );
+
+  # Update stash with post data
+  $stash->{"header_\L$_"} = $post->headers->{$_} foreach keys %{$post->{headers}};
+  $stash->{body} = $post->body;
+
+  return $self->{interpolate_sub}->( template => $post_tmpl, stash => $stash );
 }
 
 1;
