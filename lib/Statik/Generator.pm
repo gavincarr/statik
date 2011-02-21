@@ -71,39 +71,110 @@ sub generate_updates {
 sub _generate_path_pages {
   my ($self, $path) = @_;
 # print "+ generate_path_pages: $path\n" if $self->{verbose};
-  my $config = $self->{config};
 
-  # Post file
+  my $config = $self->{config};
+  mkdir "$config->{static_dir}/$path", 0755
+    unless -d "$config->{static_dir}/$path" || $self->{noop};
+
+  # Single post page
   if ($path =~ m/\.$config->{file_extension}$/o) {
     for my $flavour (@{$config->{post_flavours}}) {
-      my $theme;
-      ($flavour, $theme) = split /:/, $flavour, 2 if $flavour =~ m/:/;
-      (my $filename = $path) =~ s/\.$config->{file_extension}$/.$flavour/o;
-
-      print "+ generating post output $filename\n" if $self->{verbose};
-      my $output = $self->_generate_page(
-        post => $path,
+      my $fconfig = $config->flavour($flavour);
+      my $theme = $fconfig->{theme} || 'default';
+      my $post_tmpl = $self->{template_sub}->(
+        chunk => 'post',
         flavour => $flavour,
         theme => $theme,
       );
+      if (! $post_tmpl) {
+        warn "WARNING: no post template found for '$flavour' flavour - skipping\n";
+        return;
+      }
+
+      print "+ generating $flavour post page for '$path'\n" if $self->{verbose};
+      my $output = $self->_generate_page(
+        flavour => $flavour,
+        theme => $theme,
+        post_files => [ $path ],
+        post_template => $post_tmpl,
+      );
+
+      # TODO: do stuff with $output
     }
   }
 
-  # Index
+  # Index (multiple posts per page)
   else {
-    mkdir "$config->{static_dir}/$path", 0755
-      unless -d "$config->{static_dir}/$path" || $self->{noop};
     for my $flavour (@{$config->{index_flavours}}) {
-      my $theme;
-      ($flavour, $theme) = split /:/, $flavour, 2 if $flavour =~ m/:/;
-      my $filename = $path ? "$path/index.$flavour" : "index.$flavour";
+      # Get theme, posts_per_page  and max_pages settings
+      my $fconfig = $config->flavour($flavour);
+      my $theme = $fconfig->{theme} || 'default';
+      my $posts_per_page = $fconfig->{posts_per_page};
+      $posts_per_page = $config->{posts_per_page} 
+        unless defined $posts_per_page;
+      my $max_pages = $fconfig->{max_pages};
+      $max_pages = $config->{max_pages} 
+        unless defined $max_pages;
 
-      print "+ generating index output $filename\n" if $self->{verbose};
-      my $output = $self->_generate_page(
-        path => $path,
+      my $post_tmpl = $self->{template_sub}->(
+        chunk => 'post',
         flavour => $flavour,
         theme => $theme,
       );
+      if (! $post_tmpl) {
+        warn "WARNING: no post template found for '$flavour' flavour - skipping\n";
+        return;
+      }
+
+      my $files = clone $self->{files};
+      my $page_num = 1;
+      my @page_files;
+      my $output;
+      for my $post_file ( $self->{sort_sub}->($files) ) {
+        $post_file =~ s!$self->{config}->{post_dir}/!!;
+
+        # Only interested in posts within $path
+        next if $path && $post_file !~ m/^$path\b/;
+
+        push @page_files, $post_file;
+        if (@page_files == $posts_per_page) {
+          printf "+ generating %s index page %d for '%s' (entries = %d)\n",
+            $flavour, $page_num, $path || '/', scalar @page_files
+              if $self->{verbose};
+          $output = $self->_generate_page(
+            flavour => $flavour,
+            theme => $theme,
+            post_files => \@page_files,
+            post_template => $post_tmpl,
+            page_num => $page_num,
+            index => 1,
+          );
+
+          # TODO: do stuff with $output
+#         my $filename = $path ? "$path/index.$flavour" : "index.$flavour";
+#         print "+ generating index output $filename\n" if $self->{verbose};
+
+          @page_files = ();
+          $page_num++;
+        }
+      }
+
+      # Output final partial page, if any
+      if (@page_files) {
+        printf "+ generating %s index page %d for '%s' (entries = %d)\n",
+          $flavour, $page_num, $path || '/', scalar @page_files
+              if $self->{verbose};
+        $output = $self->_generate_page(
+          flavour => $flavour,
+          theme => $theme,
+          post_files => \@page_files,
+          post_template => $post_tmpl,
+          page_num => $page_num,
+          index => 1,
+        );
+
+        # TODO: do stuff with $output
+      }
     }
   }
 }
@@ -115,9 +186,13 @@ sub _generate_page {
   # Check arguments
   my $flavour = delete $arg{flavour} 
     or croak "Required argument 'flavour' missing";
+  my $post_files = delete $arg{post_files}
+    or croak "Required argument 'post_files' missing";
+  my $post_tmpl = delete $arg{post_template}
+    or croak "Required argument 'post_template' missing";
+  my $page_num = delete $arg{page_num} || 1;
   my $theme = delete $arg{theme};
-  my $post_file = delete $arg{post};
-  my $path = delete $arg{path}; 
+  my $index = delete $arg{index};
   croak "Invalid arguments: " . join(',', sort keys %arg) if %arg;
 
   my $output = '';
@@ -130,35 +205,19 @@ sub _generate_page {
   $output .= $interpolate_sub->( template => $head_tmpl, stash => $stash );
 
   # Posts
-  my $post_tmpl = $template_sub->( chunk => 'post', flavour => $flavour, theme => $theme );
-  if (! $post_tmpl) {
-    warn "WARNING: no post template found for '$flavour' flavour - skipping\n";
-    return;
-  }
-
-  # Single post
-  if ($post_file) {
-    $output .= $self->_generate_post(post_file => $post_file, post_template => $post_tmpl, stash => $stash);
-  }
-
-  # Index pages (multi-post)
-  else {
-    my $files = clone $self->{files};
-    for $post_file ( $self->{sort_sub}->( $files ) ) {
-      $post_file =~ s!$self->{config}->{post_dir}/!!;
-
-      # Only interested in posts within $path
-      next if $path && $post_file !~ m/^$path\b/;
-
-      $output .= $self->_generate_post(post_file => $post_file, post_template => $post_tmpl, stash => $stash);
-    }
+  for (my $i = 0; $i <= $#$post_files; $i++) {
+    $output .= $self->_generate_post(
+      post_file => $post_files->[$i],
+      post_template => $post_tmpl, 
+      stash => $stash,
+    );
   }
 
   # Foot
   my $foot_tmpl = $template_sub->( chunk => 'foot', flavour => $flavour, theme => $theme );
   $output .= $interpolate_sub->( template => $foot_tmpl, stash => $stash );
 
-  print "\n$output\n" if ! $post_file;
+  print "\n$output\n" if $index;
   return $output if $output;
 }
 
