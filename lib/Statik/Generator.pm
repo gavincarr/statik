@@ -6,6 +6,7 @@ use Carp;
 use Clone qw(clone);
 use File::Copy qw(move);
 use Statik::Parser;
+use Statik::Stash;
 
 sub new {
   my ($class, %arg) = @_;
@@ -206,9 +207,7 @@ sub _generate_page {
   my $interpolate_sub = $self->{interpolate_sub};
 
   # Setup stash
-  my $stash = $self->{config}->to_stash;
-  $stash->{flavour} = $flavour;
-  $stash->{suffix} = $suffix;
+  my $stash = Statik::Stash->new(config => $self->{config}, flavour => $flavour);
 
   # Head
   my $head_tmpl = $template_sub->( chunk => 'head', flavour => $flavour, theme => $theme );
@@ -258,9 +257,10 @@ sub _generate_post {
   );
 
   # Update stash with post data
-  ($stash->{path} = $post_file) =~ s/\.$self->{config}->{file_extension}$/.$stash->{suffix}/;
-  $stash->{"header_\L$_"} = $post->headers->{$_} foreach keys %{$post->{headers}};
-  $stash->{body} = $post->body;
+  (my $path = $post_file) =~ s/\.$self->{config}->{file_extension}$/.$stash->{suffix}/;
+  $stash->set(path => $path);
+  $stash->set("header_\L$_" => $post->headers->{$_}) foreach keys %{$post->{headers}};
+  $stash->set(body => $post->body);
 
   return $self->{interpolate_sub}->( template => $post_tmpl, stash => $stash );
 }
