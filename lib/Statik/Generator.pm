@@ -3,6 +3,7 @@ package Statik::Generator;
 
 use strict;
 use Carp;
+use Clone qw(clone);
 use Statik::Parser;
 
 sub new {
@@ -30,6 +31,10 @@ sub new {
     $template =~ s/\$(\w+)/defined $stash->{$1} ? $stash->{$1} : ''/ge;
 
     return $template;
+  };
+  $self->{sort_sub} = sub {
+    my ($files) = @_;
+    return sort { $files->{$b} <=> $files->{$a} } keys %$files;
   };
 
   $self;
@@ -126,6 +131,11 @@ sub _generate_page {
 
   # Posts
   my $post_tmpl = $template_sub->( chunk => 'post', flavour => $flavour, theme => $theme );
+  if (! $post_tmpl) {
+    warn "WARNING: no post template found for '$flavour' flavour - skipping\n";
+    return;
+  }
+
   # Single post
   if ($post_file) {
     $output .= $self->_generate_post(post_file => $post_file, post_template => $post_tmpl, stash => $stash);
@@ -133,13 +143,22 @@ sub _generate_page {
 
   # Index pages (multi-post)
   else {
+    my $files = clone $self->{files};
+    for $post_file ( $self->{sort_sub}->( $files ) ) {
+      $post_file =~ s!$self->{config}->{post_dir}/!!;
+
+      # Only interested in posts within $path
+      next if $path && $post_file !~ m/^$path\b/;
+
+      $output .= $self->_generate_post(post_file => $post_file, post_template => $post_tmpl, stash => $stash);
+    }
   }
 
   # Foot
   my $foot_tmpl = $template_sub->( chunk => 'foot', flavour => $flavour, theme => $theme );
   $output .= $interpolate_sub->( template => $foot_tmpl, stash => $stash );
 
-  print "\n$output\n" if $post_file;
+  print "\n$output\n" if ! $post_file;
   return $output if $output;
 }
 
