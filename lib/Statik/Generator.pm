@@ -131,9 +131,11 @@ sub _generate_path_pages {
         return;
       }
 
+      # Group post files into N sets of $posts_per_page posts
+      # (we do this in two passes to calculate page_total before we render)
       my $files = clone $self->{files};
+      my (@page_files, @page_sets);
       my $page_num = 1;
-      my @page_files;
       my $output;
       for my $post_file ( $self->{sort_sub}->($files) ) {
         $post_file =~ s!$self->{config}->{post_dir}/!!;
@@ -143,42 +145,37 @@ sub _generate_path_pages {
 
         push @page_files, $post_file;
         if (@page_files == $posts_per_page) {
-          printf "+ generating %s index page %d for '%s' (entries = %d)\n",
-            $flavour, $page_num, $path || '/', scalar @page_files
-              if $self->{verbose};
-          $output = $self->_generate_page(
-            flavour => $flavour,
-            suffix => $suffix,
-            theme => $theme,
-            post_files => \@page_files,
-            post_template => $post_tmpl,
-            page_num => $page_num,
-          );
-
-          $self->_output(output => $output, 
-            path => $path, suffix => $suffix, page_num => $page_num);
+          push @page_sets, [ @page_files ];
 
           @page_files = ();
           $page_num++;
+          last if $page_num > $max_pages;
         }
       }
 
-      # Output final partial page, if any
-      if (@page_files) {
-        printf "+ generating %s index page %d for '%s' (entries = %d)\n",
-          $flavour, $page_num, $path || '/', scalar @page_files
-              if $self->{verbose};
+      # Now generate pages for each of the page sets
+      my $page_total = @page_sets;
+      $page_num = 1;
+      for my $page_files (@page_sets) {
+        printf "+ generating %s index page %d/%d for '%s' (entries = %d)\n",
+          $flavour, $page_num, $page_total, $path || '/', scalar @$page_files
+            if $self->{verbose};
         $output = $self->_generate_page(
-          flavour => $flavour,
-          suffix => $suffix,
-          theme => $theme,
-          post_files => \@page_files,
-          post_template => $post_tmpl,
-          page_num => $page_num,
+          flavour         => $flavour,
+          suffix          => $suffix,
+          theme           => $theme,
+          post_files      => $page_files,
+          post_template   => $post_tmpl,
+          page_num        => $page_num,
+          page_total      => $page_total,
+          is_index        => 1,
         );
 
         $self->_output(output => $output, 
           path => $path, suffix => $suffix, page_num => $page_num);
+
+        @page_files = ();
+        $page_num++;
       }
     }
   }
@@ -198,7 +195,9 @@ sub _generate_page {
   my $post_tmpl = delete $arg{post_template}
     or die "Required argument 'post_template' missing";
   my $page_num = delete $arg{page_num} || 1;
+  my $page_total = delete $arg{page_total} || 1;
   my $theme = delete $arg{theme};
+  my $is_index = delete $arg{is_index};
   die "Invalid arguments: " . join(',', sort keys %arg) if %arg;
 
   $post_files = [ $post_files ] unless ref $post_files;
@@ -208,6 +207,9 @@ sub _generate_page {
 
   # Setup stash
   my $stash = Statik::Stash->new(config => $self->{config}, flavour => $flavour);
+  $stash->set(page_num      => $page_num);
+  $stash->set(page_total    => $page_total);
+  $stash->set(is_index      => $is_index);
 
   # Head
   my $head_tmpl = $template_sub->( chunk => 'head', flavour => $flavour, theme => $theme );
