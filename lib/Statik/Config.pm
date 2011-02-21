@@ -19,6 +19,8 @@ sub new {
     static_dir      => "static",
     state_dir       => "state",
     index_flavours  => 'html,atom',
+    posts_per_page  => 20,
+    max_pages       => 1,
   }, $class;
   $self->{_file} = realpath($self->{_file});
 
@@ -88,6 +90,11 @@ sub to_stash {
   my $self = shift;
   my %stash = map { $_ => $self->{$_} } grep { ! /^_/ && ! ref $self->{$_} } keys %$self;
   return wantarray ? %stash : \%stash;
+}
+
+sub flavour {
+  my ($self, $flavour) = @_;
+  return $self->{_config}->{"flavour:$flavour"};
 }
 
 1;
