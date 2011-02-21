@@ -55,128 +55,136 @@ sub generate_updates {
   printf "+ Generating pages for %d updated posts\n", scalar @updates
     if $self->{verbose};
 
-  $self->_generate_path_pages('');
+  $self->_generate_index_pages('');
 
   my %done = ( '' => 1 );
   for my $path (@updates) {
     my $current_path = '';
-    for my $path_elt (split m!/!, $path) {
+    my @path_elt = split m!/!, $path;
+    while (my $path_elt = shift @path_elt) {
       $current_path .= '/' if $current_path;
       $current_path .= $path_elt;
       next if $done{$current_path}++;
-      $self->_generate_path_pages($current_path);
+      if (@path_elt) {
+        $self->_generate_index_pages($current_path);
+      }
+      else {
+        $self->_generate_post_pages($current_path);
+      }
     }
   }
 }
 
-# Generate pages for the given path element (either a post or a directory)
-sub _generate_path_pages {
+# Generate single post pages (one per post_flavour) for the given path element
+sub _generate_post_pages {
   my ($self, $path) = @_;
-# print "+ generate_path_pages: $path\n" if $self->{verbose};
+  my $config = $self->{config};
+  die "Path does not end in .$config->{file_extension}"
+    unless $path =~ m/\.$config->{file_extension}$/o;
+
+  # Iterate over flavourrs
+  for my $flavour (@{$config->{post_flavours}}) {
+    my $fconfig = $config->flavour($flavour);
+    my $suffix = $fconfig->{suffix} || $flavour;
+    my $theme = $fconfig->{theme} || 'default';
+    my $post_tmpl = $self->{template_sub}->(
+      chunk => 'post',
+      flavour => $flavour,
+      theme => $theme,
+    );
+    if (! $post_tmpl) {
+      warn "WARNING: no post template found for '$flavour' flavour - skipping\n";
+      return;
+    }
+    (my $output_file = $path) =~ s/\.$config->{file_extension}$/.$suffix/;
+
+    print "+ generating $flavour post page for '$path'\n" if $self->{verbose};
+    my $output = $self->_generate_page(
+      flavour => $flavour,
+      suffix => $suffix,
+      theme => $theme,
+      post_files => $path,
+      post_template => $post_tmpl,
+    );
+
+    $self->_output(output => $output, filename => $output_file);
+  }
+}
+
+# Generate index (multi-post) pages (one per index_flavour) for the given path element
+sub _generate_index_pages {
+  my ($self, $path) = @_;
   my $config = $self->{config};
 
-  # Single post page
-  if ($path =~ m/\.$config->{file_extension}$/o) {
-    for my $flavour (@{$config->{post_flavours}}) {
-      my $fconfig = $config->flavour($flavour);
-      my $suffix = $fconfig->{suffix} || $flavour;
-      my $theme = $fconfig->{theme} || 'default';
-      my $post_tmpl = $self->{template_sub}->(
-        chunk => 'post',
-        flavour => $flavour,
-        theme => $theme,
-      );
-      if (! $post_tmpl) {
-        warn "WARNING: no post template found for '$flavour' flavour - skipping\n";
-        return;
-      }
-      (my $output_file = $path) =~ s/\.$config->{file_extension}$/.$suffix/;
+  mkdir "$config->{static_dir}/$path", 0755
+    unless -d "$config->{static_dir}/$path" || $self->{noop};
+  for my $flavour (@{$config->{index_flavours}}) {
+    # Get theme, posts_per_page and max_pages settings
+    my $fconfig = $config->flavour($flavour);
+    my $suffix = $fconfig->{suffix} || $flavour;
+    my $theme = $fconfig->{theme} || 'default';
+    my $posts_per_page = $fconfig->{posts_per_page};
+    $posts_per_page = $config->{posts_per_page} 
+      unless defined $posts_per_page;
+    my $max_pages = $fconfig->{max_pages};
+    $max_pages = $config->{max_pages} 
+      unless defined $max_pages;
 
-      print "+ generating $flavour post page for '$path'\n" if $self->{verbose};
-      my $output = $self->_generate_page(
-        flavour => $flavour,
-        suffix => $suffix,
-        theme => $theme,
-        post_files => $path,
-        post_template => $post_tmpl,
-      );
-
-      $self->_output(output => $output, filename => $output_file);
+    my $post_tmpl = $self->{template_sub}->(
+      chunk => 'post',
+      flavour => $flavour,
+      theme => $theme,
+    );
+    if (! $post_tmpl) {
+      warn "WARNING: no post template found for '$flavour' flavour - skipping\n";
+      return;
     }
-  }
 
-  # Index (multiple posts per page)
-  else {
-    mkdir "$config->{static_dir}/$path", 0755
-      unless -d "$config->{static_dir}/$path" || $self->{noop};
-    for my $flavour (@{$config->{index_flavours}}) {
-      # Get theme, posts_per_page and max_pages settings
-      my $fconfig = $config->flavour($flavour);
-      my $suffix = $fconfig->{suffix} || $flavour;
-      my $theme = $fconfig->{theme} || 'default';
-      my $posts_per_page = $fconfig->{posts_per_page};
-      $posts_per_page = $config->{posts_per_page} 
-        unless defined $posts_per_page;
-      my $max_pages = $fconfig->{max_pages};
-      $max_pages = $config->{max_pages} 
-        unless defined $max_pages;
+    # Group post files into N sets of $posts_per_page posts
+    # (we do this in two passes to calculate page_total before we render)
+    my $files = clone $self->{files};
+    my (@page_files, @page_sets);
+    my $page_num = 1;
+    my $output;
+    for my $post_file ( $self->{sort_sub}->($files) ) {
+      $post_file =~ s!$self->{config}->{post_dir}/!!;
 
-      my $post_tmpl = $self->{template_sub}->(
-        chunk => 'post',
-        flavour => $flavour,
-        theme => $theme,
-      );
-      if (! $post_tmpl) {
-        warn "WARNING: no post template found for '$flavour' flavour - skipping\n";
-        return;
-      }
+      # Only interested in posts within $path
+      next if $path && $post_file !~ m/^$path\b/;
 
-      # Group post files into N sets of $posts_per_page posts
-      # (we do this in two passes to calculate page_total before we render)
-      my $files = clone $self->{files};
-      my (@page_files, @page_sets);
-      my $page_num = 1;
-      my $output;
-      for my $post_file ( $self->{sort_sub}->($files) ) {
-        $post_file =~ s!$self->{config}->{post_dir}/!!;
-
-        # Only interested in posts within $path
-        next if $path && $post_file !~ m/^$path\b/;
-
-        push @page_files, $post_file;
-        if (@page_files == $posts_per_page) {
-          push @page_sets, [ @page_files ];
-
-          @page_files = ();
-          $page_num++;
-          last if $page_num > $max_pages;
-        }
-      }
-
-      # Now generate pages for each of the page sets
-      my $page_total = @page_sets;
-      $page_num = 1;
-      for my $page_files (@page_sets) {
-        printf "+ generating %s index page %d/%d for '%s' (entries = %d)\n",
-          $flavour, $page_num, $page_total, $path || '/', scalar @$page_files
-            if $self->{verbose};
-        $output = $self->_generate_page(
-          flavour         => $flavour,
-          suffix          => $suffix,
-          theme           => $theme,
-          post_files      => $page_files,
-          post_template   => $post_tmpl,
-          page_num        => $page_num,
-          page_total      => $page_total,
-          is_index        => 1,
-        );
-
-        $self->_output(output => $output, 
-          path => $path, suffix => $suffix, page_num => $page_num);
+      push @page_files, $post_file;
+      if (@page_files == $posts_per_page) {
+        push @page_sets, [ @page_files ];
 
         @page_files = ();
         $page_num++;
+        last if $page_num > $max_pages;
       }
+    }
+
+    # Now generate pages for each of the page sets
+    my $page_total = @page_sets;
+    $page_num = 1;
+    for my $page_files (@page_sets) {
+      printf "+ generating %s index page %d/%d for '%s' (entries = %d)\n",
+        $flavour, $page_num, $page_total, $path || '/', scalar @$page_files
+          if $self->{verbose};
+      $output = $self->_generate_page(
+        flavour         => $flavour,
+        suffix          => $suffix,
+        theme           => $theme,
+        post_files      => $page_files,
+        post_template   => $post_tmpl,
+        page_num        => $page_num,
+        page_total      => $page_total,
+        is_index        => 1,
+      );
+
+      $self->_output(output => $output, 
+        path => $path, suffix => $suffix, page_num => $page_num);
+
+      @page_files = ();
+      $page_num++;
     }
   }
 }
