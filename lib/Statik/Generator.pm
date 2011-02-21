@@ -4,6 +4,7 @@ package Statik::Generator;
 use strict;
 use Carp;
 use Clone qw(clone);
+use File::Copy qw(move);
 use Statik::Parser;
 
 sub new {
@@ -46,8 +47,8 @@ sub generate_updates {
 
   # Check arguments
   my $updates = delete $arg{updates} 
-    or croak "Required argument 'updates' missing";
-  croak "Invalid arguments: " . join(',', sort keys %arg) if %arg;
+    or die "Required argument 'updates' missing";
+  die "Invalid arguments: " . join(',', sort keys %arg) if %arg;
 
   my @updates = sort keys %$updates or return;
   printf "+ Generating pages for %d updated posts\n", scalar @updates
@@ -71,15 +72,13 @@ sub generate_updates {
 sub _generate_path_pages {
   my ($self, $path) = @_;
 # print "+ generate_path_pages: $path\n" if $self->{verbose};
-
   my $config = $self->{config};
-  mkdir "$config->{static_dir}/$path", 0755
-    unless -d "$config->{static_dir}/$path" || $self->{noop};
 
   # Single post page
   if ($path =~ m/\.$config->{file_extension}$/o) {
     for my $flavour (@{$config->{post_flavours}}) {
       my $fconfig = $config->flavour($flavour);
+      my $suffix = $fconfig->{suffix} || $flavour;
       my $theme = $fconfig->{theme} || 'default';
       my $post_tmpl = $self->{template_sub}->(
         chunk => 'post',
@@ -90,21 +89,24 @@ sub _generate_path_pages {
         warn "WARNING: no post template found for '$flavour' flavour - skipping\n";
         return;
       }
+      (my $output_file = $path) =~ s/\.$config->{file_extension}$/.$suffix/;
 
       print "+ generating $flavour post page for '$path'\n" if $self->{verbose};
       my $output = $self->_generate_page(
         flavour => $flavour,
         theme => $theme,
-        post_files => [ $path ],
+        post_files => $path,
         post_template => $post_tmpl,
       );
 
-      # TODO: do stuff with $output
+      $self->_output(output => $output, filename => $output_file);
     }
   }
 
   # Index (multiple posts per page)
   else {
+    mkdir "$config->{static_dir}/$path", 0755
+      unless -d "$config->{static_dir}/$path" || $self->{noop};
     for my $flavour (@{$config->{index_flavours}}) {
       # Get theme, posts_per_page  and max_pages settings
       my $fconfig = $config->flavour($flavour);
@@ -147,12 +149,10 @@ sub _generate_path_pages {
             post_files => \@page_files,
             post_template => $post_tmpl,
             page_num => $page_num,
-            index => 1,
           );
 
-          # TODO: do stuff with $output
-#         my $filename = $path ? "$path/index.$flavour" : "index.$flavour";
-#         print "+ generating index output $filename\n" if $self->{verbose};
+          $self->_output(output => $output, 
+            path => $path, flavour => $flavour, page_num => $page_num);
 
           @page_files = ();
           $page_num++;
@@ -170,10 +170,10 @@ sub _generate_path_pages {
           post_files => \@page_files,
           post_template => $post_tmpl,
           page_num => $page_num,
-          index => 1,
         );
 
-        # TODO: do stuff with $output
+        $self->_output(output => $output, 
+          path => $path, flavour => $flavour, page_num => $page_num);
       }
     }
   }
@@ -185,16 +185,16 @@ sub _generate_page {
 
   # Check arguments
   my $flavour = delete $arg{flavour} 
-    or croak "Required argument 'flavour' missing";
+    or die "Required argument 'flavour' missing";
   my $post_files = delete $arg{post_files}
-    or croak "Required argument 'post_files' missing";
+    or die "Required argument 'post_files' missing";
   my $post_tmpl = delete $arg{post_template}
-    or croak "Required argument 'post_template' missing";
+    or die "Required argument 'post_template' missing";
   my $page_num = delete $arg{page_num} || 1;
   my $theme = delete $arg{theme};
-  my $index = delete $arg{index};
-  croak "Invalid arguments: " . join(',', sort keys %arg) if %arg;
+  die "Invalid arguments: " . join(',', sort keys %arg) if %arg;
 
+  $post_files = [ $post_files ] unless ref $post_files;
   my $output = '';
   my $template_sub = $self->{template_sub};
   my $interpolate_sub = $self->{interpolate_sub};
@@ -217,7 +217,6 @@ sub _generate_page {
   my $foot_tmpl = $template_sub->( chunk => 'foot', flavour => $flavour, theme => $theme );
   $output .= $interpolate_sub->( template => $foot_tmpl, stash => $stash );
 
-  print "\n$output\n" if $index;
   return $output if $output;
 }
 
@@ -226,11 +225,12 @@ sub _generate_post {
 
   # Check arguments
   my $post_file = delete $arg{post_file}
-    or croak "Required argument 'post_file' missing";
+    or die "Required argument 'post_file' missing";
   my $post_tmpl = delete $arg{post_template}
-    or croak "Required argument 'post_template' missing";
+    or die "Required argument 'post_template' missing";
   my $stash = delete $arg{stash}
-    or croak "Required argument 'stash' missing";
+    or die "Required argument 'stash' missing";
+  die "Invalid arguments: " . join(',', sort keys %arg) if %arg;
 # $stash = $self->{config}->to_stash;
 
   # Parse post
@@ -249,6 +249,46 @@ sub _generate_post {
   $stash->{body} = $post->body;
 
   return $self->{interpolate_sub}->( template => $post_tmpl, stash => $stash );
+}
+
+sub _output {
+  my ($self, %arg) = @_;
+
+  my $output = delete $arg{output}
+    or die "Required argument 'output' missing";
+  my $path_filename = delete $arg{filename};
+
+  $path_filename ||= $self->_generate_filename(%arg);
+  my $static_path_filename = "$self->{config}->{static_dir}/$path_filename";
+  
+  if ($self->{noop}) {
+    print "+ outputting $path_filename\n";
+    return;
+  }
+
+  open my $fh, '>', "$static_path_filename.tmp"
+    or die "Cannot open output file '$static_path_filename.tmp': $!";
+  binmode $fh, ":encoding($self->{config}->{blog_encoding})";
+  print $fh $output
+    or die "Cannot write to '$static_path_filename': $!";
+  close $fh
+    or die "Close on '$static_path_filename' failed: $!";
+
+  move "$static_path_filename.tmp", $static_path_filename
+    or die "Renaming $static_path_filename.tmp to non-tmp version failed: $!";
+}
+
+sub _generate_filename {
+  my ($self, %arg) = @_;
+
+  my $path = delete $arg{path};
+  die "Required argument 'path' missing" unless defined $path;
+  my $flavour = delete $arg{flavour}
+    or die "Required argument 'flavour' missing";
+  my $page_num = delete $arg{page_num} || 1;
+
+  $path .= '/' unless substr($path,-1) eq '/';
+  return sprintf "%sindex%s.%s", $path, $page_num == 1 ? '' : $page_num, $flavour;
 }
 
 1;
