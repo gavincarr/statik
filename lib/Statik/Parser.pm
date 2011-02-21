@@ -12,12 +12,15 @@ sub new {
   # Check arguments
   $self->{file} = delete $arg{file} 
     or croak "Required argument 'file' missing";
+  $self->{encoding} = delete $arg{encoding} 
+    or croak "Required argument 'encoding' missing";
   croak "File '$self->{file}' not found" if ! -f $self->{file};
   croak "Invalid arguments: " . join(',', sort keys %arg) if %arg;
 
   # Read post data
   open my $fh, '<', $self->{file}
     or die "Cannot open post '$self->{file}': $!\n";
+  binmode $fh, ":encoding($self->{encoding})";
   {
     local $/ = undef;
     $self->{raw} = <$fh>;

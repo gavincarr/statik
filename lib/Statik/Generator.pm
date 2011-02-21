@@ -234,7 +234,11 @@ sub _generate_post {
 # $stash = $self->{config}->to_stash;
 
   # Parse post
-  my $post = Statik::Parser->new( file => "$self->{config}->{post_dir}/$post_file" );
+  my $post = Statik::Parser->new(
+    file => "$self->{config}->{post_dir}/$post_file",
+    # TODO: maybe we should have a separate file_encoding setting?
+    encoding => $self->{config}->{blog_encoding},
+  );
 
   # Post hook
   $self->{plugins}->call_all('post',
