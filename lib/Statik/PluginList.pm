@@ -103,8 +103,14 @@ sub call_first {
   my ($self, $hook, @args) = @_;
 
   for my $plugin ($self->plugins($hook)) {
-    my @results = $plugin->$hook(@args);
-    return @results if @results;
+    if (wantarray) {
+      my @results = $plugin->$hook(@args);
+      return @results if @results;
+    }
+    else {
+      my $result = $plugin->$hook(@args);
+      return $result if $result;
+    }
   }
 }
 
@@ -118,3 +124,52 @@ sub call_all {
 }
 
 1;
+
+=head1 NAME
+
+Statik::PluginList - class holding the list of currently active statik plugins
+
+=head1 SYNOPSIS
+
+  use Statik::PluginList;
+  
+  # Load plugins using config plugin_list and plugin_path
+  $plugins = Statik::PluginList->new(config => $config);
+
+  # Return full plugin list
+  @plugins = $plugins->plugins;
+
+  # Return the first defined plugin for the given hook
+  $plugin = $plugins->first('entries');
+
+  # Call the given hook with @args for all plugins until one returns results
+  @results = $plugins->call_first('post', @args);
+  $results = $plugins->call_first('sort', @args);
+
+  # Call all the given hook routines with @args for all plugins
+  $plugins->call_all('head', @args);
+
+
+=head1 DESCRIPTION
+
+Statik::PluginList is a class for loading and working with the list of currently
+active statik plugins.
+
+=head1 SEE ALSO
+
+Statik
+
+=head1 AUTHOR
+
+Gavin Carr <gavin@openfusion.com.au>
+
+=head1 COPYRIGHT AND LICENCE
+
+Copyright (C) Gavin Carr 2011.
+
+This library is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself, either Perl version 5.8.0 or, at
+your option, any later version of Perl 5.
+
+=cut
+
