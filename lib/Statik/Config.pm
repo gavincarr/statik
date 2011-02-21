@@ -6,6 +6,7 @@ use Cwd qw(realpath);
 use File::Spec;
 use File::Basename;
 use Config::Tiny;
+use Encode qw(decode);
 
 sub new {
   my $class = shift;
@@ -15,6 +16,8 @@ sub new {
   # Defaults
   my $self = bless { 
     _file           => $arg{file} || File::Spec->catfile($Bin, File::Spec->updir, 'config', 'statik.conf'),
+    blog_language   => 'en',
+    blog_encoding   => 'utf-8',
     post_dir        => "posts",
     static_dir      => "static",
     state_dir       => "state",
@@ -30,10 +33,10 @@ sub new {
     or die "Read of '$self->{_file} failed\n";
 
   # Promote all _config->{_} keys to top-level
-  my $val;
+  my $encoding = $self->{_config}->{_}->{blog_encoding};
   for (keys %{$self->{_config}->{_}}) {
-    if (defined($val = delete $self->{_config}->{_}->{$_})) {
-      $self->{$_} = $val if $val ne '';
+    if (defined(my $val = delete $self->{_config}->{_}->{$_})) {
+      $self->{decode($encoding, $_)} = decode($encoding, $val) if $val ne '';
     }
   }
   delete $self->{_config}->{_};
