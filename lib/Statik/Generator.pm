@@ -94,6 +94,7 @@ sub _generate_path_pages {
       print "+ generating $flavour post page for '$path'\n" if $self->{verbose};
       my $output = $self->_generate_page(
         flavour => $flavour,
+        suffix => $suffix,
         theme => $theme,
         post_files => $path,
         post_template => $post_tmpl,
@@ -108,8 +109,9 @@ sub _generate_path_pages {
     mkdir "$config->{static_dir}/$path", 0755
       unless -d "$config->{static_dir}/$path" || $self->{noop};
     for my $flavour (@{$config->{index_flavours}}) {
-      # Get theme, posts_per_page  and max_pages settings
+      # Get theme, posts_per_page and max_pages settings
       my $fconfig = $config->flavour($flavour);
+      my $suffix = $fconfig->{suffix} || $flavour;
       my $theme = $fconfig->{theme} || 'default';
       my $posts_per_page = $fconfig->{posts_per_page};
       $posts_per_page = $config->{posts_per_page} 
@@ -145,6 +147,7 @@ sub _generate_path_pages {
               if $self->{verbose};
           $output = $self->_generate_page(
             flavour => $flavour,
+            suffix => $suffix,
             theme => $theme,
             post_files => \@page_files,
             post_template => $post_tmpl,
@@ -152,7 +155,7 @@ sub _generate_path_pages {
           );
 
           $self->_output(output => $output, 
-            path => $path, flavour => $flavour, page_num => $page_num);
+            path => $path, suffix => $suffix, page_num => $page_num);
 
           @page_files = ();
           $page_num++;
@@ -166,6 +169,7 @@ sub _generate_path_pages {
               if $self->{verbose};
         $output = $self->_generate_page(
           flavour => $flavour,
+          suffix => $suffix,
           theme => $theme,
           post_files => \@page_files,
           post_template => $post_tmpl,
@@ -173,7 +177,7 @@ sub _generate_path_pages {
         );
 
         $self->_output(output => $output, 
-          path => $path, flavour => $flavour, page_num => $page_num);
+          path => $path, suffix => $suffix, page_num => $page_num);
       }
     }
   }
@@ -186,6 +190,8 @@ sub _generate_page {
   # Check arguments
   my $flavour = delete $arg{flavour} 
     or die "Required argument 'flavour' missing";
+  my $suffix = delete $arg{suffix} 
+    or die "Required argument 'suffix' missing";
   my $post_files = delete $arg{post_files}
     or die "Required argument 'post_files' missing";
   my $post_tmpl = delete $arg{post_template}
@@ -198,7 +204,11 @@ sub _generate_page {
   my $output = '';
   my $template_sub = $self->{template_sub};
   my $interpolate_sub = $self->{interpolate_sub};
+
+  # Setup stash
   my $stash = $self->{config}->to_stash;
+  $stash->{flavour} = $flavour;
+  $stash->{suffix} = $suffix;
 
   # Head
   my $head_tmpl = $template_sub->( chunk => 'head', flavour => $flavour, theme => $theme );
@@ -231,7 +241,6 @@ sub _generate_post {
   my $stash = delete $arg{stash}
     or die "Required argument 'stash' missing";
   die "Invalid arguments: " . join(',', sort keys %arg) if %arg;
-# $stash = $self->{config}->to_stash;
 
   # Parse post
   my $post = Statik::Parser->new(
@@ -249,6 +258,7 @@ sub _generate_post {
   );
 
   # Update stash with post data
+  ($stash->{path} = $post_file) =~ s/\.$self->{config}->{file_extension}$/.$stash->{suffix}/;
   $stash->{"header_\L$_"} = $post->headers->{$_} foreach keys %{$post->{headers}};
   $stash->{body} = $post->body;
 
@@ -287,12 +297,12 @@ sub _generate_filename {
 
   my $path = delete $arg{path};
   die "Required argument 'path' missing" unless defined $path;
-  my $flavour = delete $arg{flavour}
-    or die "Required argument 'flavour' missing";
+  my $suffix = delete $arg{suffix}
+    or die "Required argument 'suffix' missing";
   my $page_num = delete $arg{page_num} || 1;
 
   $path .= '/' unless substr($path,-1) eq '/';
-  return sprintf "%sindex%s.%s", $path, $page_num == 1 ? '' : $page_num, $flavour;
+  return sprintf "%sindex%s.%s", $path, $page_num == 1 ? '' : $page_num, $suffix;
 }
 
 1;
