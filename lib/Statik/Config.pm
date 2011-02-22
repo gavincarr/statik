@@ -9,6 +9,7 @@ use Config::Tiny;
 use Encode qw(decode);
 use Hash::Merge qw(merge);
 
+my @main_required    = qw(url author_name blog_id_year);
 my %main_booleans    = map { $_ => 1 } qw(show_future_entries);
 my %flavour_booleans = map { $_ => 1 } qw(xml_escape);
 my %flavour_defaults = (
@@ -51,12 +52,22 @@ sub new {
   }
   delete $self->{_config}->{_};
 
+  $self->_check_required;
   $self->_qualify_paths;
   $self->_split_composites;
   $self->_map_booleans;
   $self->_clean_flavours;
 
   $self;
+}
+
+# Check all required fields are set
+sub _check_required {
+  my $self = shift;
+  for (@main_required) {
+    die "Required config item '$_' is not defined - please set and try again\n"
+      if ! defined $self->{$_} || $self->{$_} eq '';
+  }
 }
 
 # Qualify any relative top-level paths
