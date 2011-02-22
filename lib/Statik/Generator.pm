@@ -5,6 +5,9 @@ use strict;
 use Carp;
 use Clone qw(clone);
 use File::Copy qw(move);
+use File::stat;
+use Time::Piece;
+
 use Statik::Parser;
 use Statik::Stash;
 
@@ -146,6 +149,7 @@ sub _generate_index_pages {
     my (@page_files, @page_sets);
     my $page_num = 1;
     my $output;
+    my $index_mtime = 0;
     for my $post_file ( $self->{sort_sub}->($files) ) {
       $post_file =~ s!$self->{config}->{post_dir}/!!;
 
@@ -153,6 +157,10 @@ sub _generate_index_pages {
       next if $path && $post_file !~ m/^$path\b/;
 
       push @page_files, $post_file;
+      my $post_fullpath = "$self->{config}->{post_dir}/$post_file";
+      my $mtime = stat($post_fullpath)->mtime;
+      $index_mtime = $mtime if $mtime > $index_mtime;
+
       if (@page_files == $posts_per_page) {
         push @page_sets, [ @page_files ];
 
@@ -178,6 +186,7 @@ sub _generate_index_pages {
         post_template   => $post_tmpl,
         page_num        => $page_num,
         page_total      => $page_total,
+        index_mtime     => $index_mtime,
         is_index        => 1,
       );
 
@@ -207,6 +216,7 @@ sub _generate_page {
   my $page_total = delete $arg{page_total} || 1;
   my $theme = delete $arg{theme};
   my $is_index = delete $arg{is_index};
+  my $index_mtime = delete $arg{index_mtime};
   my $path = delete $arg{path};
   die "Invalid arguments: " . join(',', sort keys %arg) if %arg;
   $path = $post_files unless defined $path || ref $post_files;
@@ -223,6 +233,7 @@ sub _generate_page {
   $stash->set(is_index      => $is_index);
   $stash->set(path          => $path);
   $stash->set(path_abs      => "/$path");
+  $self->_set_stash_dates($stash, 'index_updated', $index_mtime) if $index_mtime;
 
   # Head
   my $head_tmpl = $template_sub->( chunk => 'head', flavour => $flavour, theme => $theme );
@@ -273,6 +284,10 @@ sub _generate_post {
   $stash->set("header_\L$_" => $post->headers->{$_}) foreach keys %{$post->{headers}};
   # post body is able in the 'body' field
   $stash->set(body          => $post->body);
+  # Post date entries
+  my $post_fullpath = "$self->{config}->{post_dir}/$post_file";
+  $self->_set_stash_dates($stash, 'post_created', $self->{files}->{$post_fullpath});
+  $self->_set_stash_dates($stash, 'post_updated', stat($post_fullpath)->mtime);
 
   # Post hook
   $self->{plugins}->call_all('post',
@@ -323,6 +338,17 @@ sub _generate_filename {
 
   $path .= '/' unless substr($path,-1) eq '/';
   return sprintf "%sindex%s.%s", $path, $page_num == 1 ? '' : $page_num, $suffix;
+}
+
+sub _set_stash_dates {
+  my ($self, $stash, $label, $epoch) = @_;
+  die "epoch unset for $stash->{post_path} / $label" if ! defined $epoch;
+
+  my $t = ref $epoch ? $epoch : Time::Piece->strptime($epoch, '%s');
+
+  $stash->set("${label}_epoch"      => $t->epoch);
+  $stash->set("${label}_date"       => $t->strftime('%Y-%m-%d'));
+  $stash->set("${label}_iso8601"    => $t->strftime('%Y-%m-%dT%T%z'));
 }
 
 1;
