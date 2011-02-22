@@ -30,11 +30,12 @@ sub defaults {
 sub start {
   my $self = shift;
   $self->{cache} = {};
+  my $config = $self->config;
 
   # Qualify config items if required
-  $self->{theme_dir} = "$self->{config}->{base_dir}/$self->{theme_dir}"
+  $self->{theme_dir} = "$config->{base_dir}/$self->{theme_dir}"
     if substr($self->{theme_dir},0,1) ne '/';
-  $self->{theme_dir_url} = "$self->{config}->{url}/$self->{theme_dir_url}"
+  $self->{theme_dir_url} = "$config->{url}/$self->{theme_dir_url}"
     if substr($self->{theme_dir_url},0,1) ne '/';
 }
 
