@@ -1,9 +1,9 @@
-# Statik Plugin: entries_default
+# Statik Plugin: Statik::Plugin::Entries
 # Author(s): Gavin Carr <gavin@openfusion.com.au>
 # Version: 0.001
-# Documentation: See the bottom of this file or type: perldoc entries_default
+# Documentation: See the bottom of this file or type: perldoc Statik::Plugin::Entries
 
-package entries_default;
+package Statik::Plugin::Entries;
 
 use parent qw(Statik::Plugin);
 
@@ -16,16 +16,16 @@ use Time::Piece;
 use JSON;
 
 # Uncomment next line to enable debug output (don't uncomment debug() lines)
-#use Blosxom::Debug debug_level => 1;
+#use Blosxom::Debug debug_level => 2;
 
 # -------------------------------------------------------------------------
-# Configuration defaults. To change, add an [entries_default] section to 
+# Configuration defaults. To change, add an [Statik::Plugin::Entries] section to 
 # your statik.conf config, and update as key = value entries.
 
 sub defaults {
   return {
-    # What name should my entries_default index file be called?
-    entries_index             => 'entries_default.index',
+    # What name should my index file be called?
+    entries_index             => 'entries.index',
     # Whether to follow symlinks in posts directory
     follow_symlinks           => 0,
     # Optional flag file (or directory) updated on new/updated/deleted posts
@@ -43,7 +43,7 @@ sub defaults {
 # another hashref of post files that need to be updated
 sub entries {
   my $self = shift;
-  my $config = $self->{config};
+  my $config = $self->config;
 
   $self->{update_flag} = 0;
   $self->{index_file} = "$config->{state_dir}/$self->{entries_index}";
@@ -149,18 +149,11 @@ sub entries {
             or ! -f $index_file
             or stat($index_file)->mtime < $mtime) {
           # debug(3, "index_file $index_file out of date") unless $config->{force};
-          # If generating individual post pages, add file path to $updates
-          if ($config->{post_flavours} && @{$config->{post_flavours}}) {
-            $updates->{$path_filename_ext} = 1;
-          }
-          # If not generating individual post pages, add directory path to $updates
-          else {
-            $updates->{$path} = 1;
-          }
+          $updates->{$path_filename_ext} = 1;
           $max_mtime = $mtime if $mtime > $max_mtime;
         }
       }
-    }, $self->{config}->{post_dir}
+    }, $config->{post_dir}
   );
 
   # Add symlinks to $files with mtime of symlink target
@@ -178,27 +171,30 @@ sub entries {
   return ($files, $updates);
 }
 
-# Story hook, for updating timestamps from post_timestamp_header values
-sub story_hide {
-  my ($self, $path, $filename, $story_ref, $title_ref, $body_ref) = @_;
+# Post hook, for updating timestamps from post_timestamp_header values
+sub post {
+  my ($self, %arg) = @_;
+  my $config = $self->config;
+  my $stash = $arg{stash};
 
-  my ($header, $value);
-  if ($header = $self->{post_timestamp_header} and
-      $value  = $blosxom::meta{ $header }) {
+  my $timestamp;
+  if ($self->{post_timestamp_header} and
+      $timestamp = $stash->{"header_$self->{post_timestamp_header}"}) {
     if (my $format = $self->{post_timestamp_format}) {
-      if (my $t = eval { Time::Piece->strptime($value, $format) }) {
-        my $story_path = "$self->{config}->{post_dir}/$path/$filename.${blosxom::file_extension}";
-        # debug(2, "Timestamp header for $story_path: " . $t->strftime('%Y-%m-%d %T %z'));
+      if (my $t = eval { Time::Piece->strptime($timestamp, $format) }) {
+
+        my $fullpath = $stash->{post_fullpath};
+        # debug(2, "Timestamp header for $fullpath: " . $t->strftime('%Y-%m-%d %T %z'));
         my $header_mtime = $t->epoch;
-        my $cache_mtime = $self->{files}->{$story_path};
+        my $cache_mtime = $self->{files}->{$fullpath};
         if (! $cache_mtime || $cache_mtime != $header_mtime) {
-          # debug(1, "Updating cache from timestamp header: $story_path => " . $t->strftime('%Y-%m-%d %T %z'));
-          $self->{files}->{$story_path} = $header_mtime;
+          # debug(1, "Updating cache from timestamp header: $fullpath => " . $t->strftime('%Y-%m-%d %T %z'));
+          $self->{files}->{$fullpath} = $header_mtime;
           $self->{updates_flag}++;
         }
       }
       else {
-        warn "post_timestamp_header $header '$value' not in format '$format' - skipping\n";
+        warn "post_timestamp_header '$self->{post_timestamp_header}: $timestamp' not in format '$format' - skipping\n";
       }
     }
     else {
@@ -240,7 +236,7 @@ __END__
 
 =head1 NAME
 
-entries_default: statik plugin to capture and preserve the original
+Statik::Plugin::Entries: statik plugin to capture and preserve the original
 creation timestamp on posts
 
 =head1 SYNOPSIS
@@ -249,18 +245,18 @@ To configure, add some or all of the following to your statik.conf:
 
 =head1 DESCRIPTION
 
-entries_default is a statik plugin for capturing and preserving the
-original creation timestamp on posts. It maintains an index file
+Statik::Plugin::Entries is a statik plugin for capturing and preserving
+the original creation timestamp on posts. It maintains an index file
 (configurable, but 'entries_default.index' by default) of creation
 timestamps for all posts, and returns a file hash with modification
 times from that index.
 
 =head1 BUGS AND LIMITATIONS
 
-entries_default currently only supports symlinks to local post files,
-not symlinks to arbitrary files outside your post_dir.
+Statik::Plugin::Entries currently only supports symlinks to local
+post files, not symlinks to arbitrary files outside your post_dir.
 
-entries_default doesn't currently do any kind caching.
+Statik::Plugin::Entries doesn't currently do any kind caching.
 
 Please report bugs directly to the author.
 
@@ -268,7 +264,7 @@ Please report bugs directly to the author.
 
 Gavin Carr <gavin@openfusion.com.au>, http://www.openfusion.net/
 
-=head1 LICENSE
+=head1 LICENCE
 
 Copyright 2011, Gavin Carr.
 
