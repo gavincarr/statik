@@ -11,15 +11,15 @@ sub new {
   my $self = bless {}, ref $class || $class;
 
   # Check arguments
-  $self->{config} = delete $arg{config} 
+  $self->{_config} = delete $arg{config} 
     or croak "Required argument 'config' missing";
   croak "Invalid arguments: " . join(',', sort keys %arg) if %arg;
 
   # Initialise
   $self->{name} = ref $self;
-  my $plugin_config = merge( $self->{config}->{_config}->{$self->{name}}||{}, 
+  my $plugin_config = merge( $self->{_config}->{_config}->{$self->{name}}||{}, 
                              $self->defaults );
-  for (qw(config name)) {
+  for (qw(name)) {
     die "Can't use reserved attribute '$_' as $self->{name} config item"
       if exists $plugin_config->{$_};
   }
@@ -34,6 +34,11 @@ sub new {
 # Plugin config defaults
 sub defaults {
   return {};
+}
+
+sub config {
+  my $self = shift;
+  return $self->{_config};
 }
 
 1;
