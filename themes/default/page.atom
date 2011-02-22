@@ -1,0 +1,24 @@
+<!-- statik head -->
+<?xml version="1.0" encoding="$blog_encoding"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+<title>$blog_title</title> 
+<subtitle>$blog_description</subtitle> 
+<link href="$url/$path"/>
+<updated>$index_updated_iso8601</updated>
+<author>
+  <name>$author_name</name>
+</author> 
+<id>tag:$blog_id_domain,$blog_id_year:$path_abs</id>
+<generator uri="https://github.com/gavincarr/statik" version="0.1">Statik</generator>
+
+<!-- statik post -->
+<entry>
+<title>$header_title</title>
+<link href="$url/$post_path/$post_filename"/>
+<id>$atom_entry_id</id>
+<updated>$post_updated_iso8601</updated>
+</entry>
+
+<!-- statik foot -->
+</feed>
+
