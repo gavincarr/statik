@@ -28,13 +28,16 @@ sub new {
       File::Spec->catfile($Bin, File::Spec->updir, 'config', 'statik.conf'),
     blog_language           => 'en',
     blog_encoding           => 'utf-8',
-    post_dir                => "posts",
-    static_dir              => "static",
-    state_dir               => "state",
-    index_flavours          => 'html,atom',
+    post_dir                => 'posts',
+    static_dir              => 'static',
+    state_dir               => 'state',
     posts_per_page          => 20,
     max_pages               => 1,
     show_future_entries     => 0,
+    file_extension          => 'txt',
+    show_future_entries     => 0,
+    plugin_list             => 'config/plugins.conf',
+    index_flavours          => 'html,atom',
   }, $class;
   $self->{_file} = realpath($self->{_file});
 
@@ -53,8 +56,8 @@ sub new {
   delete $self->{_config}->{_};
 
   $self->_check_required;
-  $self->_qualify_paths;
   $self->_split_composites;
+  $self->_qualify_paths;
   $self->_map_booleans;
   $self->_clean_flavours;
 
@@ -70,6 +73,26 @@ sub _check_required {
   }
 }
 
+# Split composite values into arrayrefs
+sub _split_composites {
+  my $self = shift;
+
+  # Comma-separated composites
+  for (qw(index_flavours post_flavours)) {
+    $self->{$_} = [ split /\s*,\s*/, $self->{$_} ]
+      if defined $self->{$_} && $self->{$_} ne '';
+    $self->{$_} ||= [];
+  }
+
+  # Path composites
+  my $sep = ($^O =~ m/^MSWin/ ? ';' : ':');
+  for (qw(plugin_path)) {
+    $self->{$_} = [ split /\s*$sep\s*/o, $self->{$_} ]
+      if defined $self->{$_} && $self->{$_} ne '';
+    $self->{$_} ||= [];
+  }
+}
+
 # Qualify any relative top-level paths
 sub _qualify_paths {
   my $self = shift;
@@ -81,13 +104,9 @@ sub _qualify_paths {
     next unless m/_(dir|list|path)$/;
     next if $_ eq 'base_dir';
 
-    # For paths, qualify all elements, and store as an arrayref
-    if (m/_path$/) {
-      my $path = $self->{$_};
-      $self->{$_} = [];
-      for my $elt (split /[:;]/, $path) {
-        push @{$self->{$_}}, File::Spec->rel2abs( $elt, $self->{base_dir} );
-      }
+    if (ref $self->{$_}) {
+      $self->{$_} = File::Spec->rel2abs( $self->{$_}, $self->{base_dir} )
+        foreach @{$self->{$_}};
     }
 
     else {
@@ -96,16 +115,7 @@ sub _qualify_paths {
   }
 }
 
-# Split composite values into arrayrefs
-sub _split_composites {
-  my $self = shift;
-
-  # Comma-separated composites
-  for (qw(index_flavours post_flavours)) {
-    $self->{$_} = [ split /\s*,\s*/, $self->{$_} ];
-  }
-}
-
+# Map boolean strings to ints
 sub _map_booleans {
   my $self = shift;
   for (keys %main_booleans) {
@@ -114,6 +124,7 @@ sub _map_booleans {
   }
 }
 
+# Clean/standardise flavour configs
 sub _clean_flavours {
   my $self = shift;
 
@@ -134,6 +145,7 @@ sub _clean_flavours {
   }
 }
 
+# Return non-private keys
 sub keys {
   my $self = shift;
   grep ! /^_/, keys %$self;
@@ -146,6 +158,7 @@ sub to_stash {
   return wantarray ? %stash : \%stash;
 }
 
+# Return flavour config
 sub flavour {
   my ($self, $flavour) = @_;
   return $self->{_config}->{"flavour:$flavour"};
