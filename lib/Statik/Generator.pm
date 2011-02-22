@@ -173,6 +173,7 @@ sub _generate_index_pages {
         flavour         => $flavour,
         suffix          => $suffix,
         theme           => $theme,
+        path            => $path,
         post_files      => $page_files,
         post_template   => $post_tmpl,
         page_num        => $page_num,
@@ -206,7 +207,9 @@ sub _generate_page {
   my $page_total = delete $arg{page_total} || 1;
   my $theme = delete $arg{theme};
   my $is_index = delete $arg{is_index};
+  my $path = delete $arg{path};
   die "Invalid arguments: " . join(',', sort keys %arg) if %arg;
+  $path = $post_files unless defined $path || ref $post_files;
 
   $post_files = [ $post_files ] unless ref $post_files;
   my $output = '';
@@ -218,6 +221,8 @@ sub _generate_page {
   $stash->set(page_num      => $page_num);
   $stash->set(page_total    => $page_total);
   $stash->set(is_index      => $is_index);
+  $stash->set(path          => $path);
+  $stash->set(path_abs      => "/$path");
 
   # Head
   my $head_tmpl = $template_sub->( chunk => 'head', flavour => $flavour, theme => $theme );
@@ -231,6 +236,10 @@ sub _generate_page {
       stash => $stash,
     );
   }
+
+  # Reset stash paths
+  $stash->set(path          => $path);
+  $stash->set(path_abs      => "/$path");
 
   # Foot
   my $foot_tmpl = $template_sub->( chunk => 'foot', flavour => $flavour, theme => $theme );
@@ -267,8 +276,10 @@ sub _generate_post {
   );
 
   # Update stash with post data
-  (my $path = $post_file) =~ s/\.$self->{config}->{file_extension}$/.$stash->{suffix}/;
+  my $path = $post_file;
+  $path =~ s/\.$self->{config}->{file_extension}$/.$stash->{suffix}/ if ! $stash->{is_index};
   $stash->set(path => $path);
+  $stash->set(path_abs => "/$path");
   $stash->set("header_\L$_" => $post->headers->{$_}) foreach keys %{$post->{headers}};
   $stash->set(body => $post->body);
 
