@@ -6,6 +6,7 @@ use Carp;
 use Clone qw(clone);
 use File::Copy qw(move);
 use File::stat;
+use File::Basename;
 use Time::Piece;
 
 use Statik::Parser;
@@ -80,10 +81,10 @@ sub generate_updates {
 
 # Generate single post pages (one per post_flavour) for the given path element
 sub _generate_post_pages {
-  my ($self, $path) = @_;
+  my ($self, $path_filename) = @_;
   my $config = $self->{config};
   die "Path does not end in .$config->{file_extension}"
-    unless $path =~ m/\.$config->{file_extension}$/o;
+    unless $path_filename =~ m/\.$config->{file_extension}$/o;
 
   # Iterate over flavours
   for my $flavour (@{$config->{post_flavours}}) {
@@ -99,18 +100,21 @@ sub _generate_post_pages {
       warn "WARNING: no post template found for '$flavour' flavour - skipping\n";
       return;
     }
-    (my $output_file = $path) =~ s/\.$config->{file_extension}$/.$suffix/;
+    my $path = dirname $path_filename;
+    my $post_fullpath = "$config->{post_dir}/$path_filename";
+    (my $output_fullpath = $post_fullpath) =~ s/\.$config->{file_extension}$/.$suffix/;
 
-    print "+ generating $flavour post page for '$path'\n" if $self->{verbose};
+    print "+ generating $flavour post page for '$path_filename'\n" if $self->{verbose};
     my $output = $self->_generate_page(
       flavour => $flavour,
       suffix => $suffix,
       theme => $theme,
-      post_files => $path,
+      path => $path,
+      post_fullpaths => $post_fullpath,
       post_template => $post_tmpl,
     );
 
-    $self->_output(output => $output, filename => $output_file);
+    $self->_output(output => $output, fullpath => $output_fullpath);
   }
 }
 
@@ -151,11 +155,12 @@ sub _generate_index_pages {
     my $output;
     my $index_mtime = 0;
     for my $post_fullpath ( $self->{sort_sub}->($files) ) {
+      die "Missing post file '$post_fullpath'" unless -f $post_fullpath;
       (my $post_file = $post_fullpath) =~ s!^$self->{config}->{post_dir}/!!;
 
       # Only interested in posts within $path
       next if $path && $post_file !~ m/^$path\b/;
-      push @page_files, $post_file;
+      push @page_files, $post_fullpath;
 
       my $mtime = stat($post_fullpath)->mtime;
       $index_mtime = $mtime if $mtime > $index_mtime;
@@ -183,7 +188,7 @@ sub _generate_index_pages {
         suffix          => $suffix,
         theme           => $theme,
         path            => $path,
-        post_files      => $page_files,
+        post_fullpaths  => $page_files,
         post_template   => $post_tmpl,
         page_num        => $page_num,
         page_total      => $page_total,
@@ -209,8 +214,8 @@ sub _generate_page {
     or die "Required argument 'flavour' missing";
   my $suffix = delete $arg{suffix} 
     or die "Required argument 'suffix' missing";
-  my $post_files = delete $arg{post_files}
-    or die "Required argument 'post_files' missing";
+  my $post_fullpaths = delete $arg{post_fullpaths}
+    or die "Required argument 'post_fullpaths' missing";
   my $post_tmpl = delete $arg{post_template}
     or die "Required argument 'post_template' missing";
   my $page_num = delete $arg{page_num} || 1;
@@ -220,9 +225,8 @@ sub _generate_page {
   my $index_mtime = delete $arg{index_mtime};
   my $path = delete $arg{path};
   die "Invalid arguments: " . join(',', sort keys %arg) if %arg;
-  $path = $post_files unless defined $path || ref $post_files;
 
-  $post_files = [ $post_files ] unless ref $post_files;
+  $post_fullpaths = [ $post_fullpaths ] unless ref $post_fullpaths;
   my $output = '';
   my $template_sub = $self->{template_sub};
   my $interpolate_sub = $self->{interpolate_sub};
@@ -241,9 +245,9 @@ sub _generate_page {
   $output .= $interpolate_sub->( template => $head_tmpl, stash => $stash );
 
   # Posts
-  for (my $i = 0; $i <= $#$post_files; $i++) {
+  for (my $i = 0; $i <= $#$post_fullpaths; $i++) {
     $output .= $self->_generate_post(
-      post_file => $post_files->[$i],
+      post_fullpath => $post_fullpaths->[$i],
       post_template => $post_tmpl, 
       stash => $stash,
     );
@@ -260,8 +264,8 @@ sub _generate_post {
   my ($self, %arg) = @_;
 
   # Check arguments
-  my $post_file = delete $arg{post_file}
-    or die "Required argument 'post_file' missing";
+  my $post_fullpath = delete $arg{post_fullpath}
+    or die "Required argument 'post_fullpath' missing";
   my $post_tmpl = delete $arg{post_template}
     or die "Required argument 'post_template' missing";
   my $stash = delete $arg{stash}
@@ -270,31 +274,35 @@ sub _generate_post {
 
   # Parse post
   my $post = Statik::Parser->new(
-    file => "$self->{config}->{post_dir}/$post_file",
+    file => $post_fullpath,
     # TODO: maybe we should have a separate file_encoding setting?
     encoding => $self->{config}->{blog_encoding},
   );
 
-  # Update stash with post data (and there are X_unesc versions of these as well
-  # if flavour is set to xml_escape = yes (which is the default)
-  # post_path is set to the post_file (relative) path without the final suffix
-  (my $post_path = $post_file) =~ s/\.$self->{config}->{file_extension}$//o;
+  # Update stash with post data (and there are X_unesc versions of these too 
+  # if flavour.xml_escape = yes, which is the default)
+  # post_path is the post_file (relative) path without the filename
+  # post_filename is the post_file basename without the file_extension
+  my ($post_filename, $post_path) = fileparse($post_fullpath, $self->{config}->{file_extension});
+  die "Post file '$post_fullpath' has unexpected format - aborting" 
+    unless $post_fullpath && $post_path;
+  $post_path =~ s!^$self->{config}->{post_dir}/!!;
+  $stash->set(post_fullpath => $post_fullpath);
   $stash->set(post_path     => $post_path);
   $stash->set(post_path_abs => "/$post_path");
+  $stash->set(post_filename => $post_filename);
+
   # post_headers are lowercased and mapped into header_xxx fields
   $stash->set("header_\L$_" => $post->headers->{$_}) foreach keys %{$post->{headers}};
   # post body is able in the 'body' field
   $stash->set(body          => $post->body);
   # Post date entries
-  my $post_fullpath = "$self->{config}->{post_dir}/$post_file";
   $self->_set_stash_dates($stash, 'post_created', $self->{files}->{$post_fullpath});
   $self->_set_stash_dates($stash, 'post_updated', stat($post_fullpath)->mtime);
 
   # Post hook
   $self->{plugins}->call_all('post',
-    path          => $post_path,
     template      => \$post_tmpl,
-    post          => $post,
     stash         => $stash,
   );
 
@@ -306,39 +314,36 @@ sub _output {
 
   my $output = delete $arg{output}
     or die "Required argument 'output' missing";
-  my $path_filename = delete $arg{filename};
+  my $fullpath = delete $arg{fullpath};
+  my $path = delete $arg{path};
 
-  $path_filename ||= $self->_generate_filename(%arg);
-  my $static_path_filename = "$self->{config}->{static_dir}/$path_filename";
+  $fullpath ||= "$self->{config}->{static_dir}/$path/" . $self->_generate_filename(%arg);
   
   if ($self->{noop}) {
-    print "+ outputting $path_filename\n";
+    print "+ outputting $fullpath\n";
     return;
   }
 
-  open my $fh, '>', "$static_path_filename.tmp"
-    or die "Cannot open output file '$static_path_filename.tmp': $!";
+  open my $fh, '>', "$fullpath.tmp"
+    or die "Cannot open output file '$fullpath.tmp': $!";
   binmode $fh, ":encoding($self->{config}->{blog_encoding})";
   print $fh $output
-    or die "Cannot write to '$static_path_filename': $!";
+    or die "Cannot write to '$fullpath': $!";
   close $fh
-    or die "Close on '$static_path_filename' failed: $!";
+    or die "Close on '$fullpath' failed: $!";
 
-  move "$static_path_filename.tmp", $static_path_filename
-    or die "Renaming $static_path_filename.tmp to non-tmp version failed: $!";
+  move "$fullpath.tmp", $fullpath
+    or die "Renaming $fullpath.tmp -> $fullpath failed: $!";
 }
 
 sub _generate_filename {
   my ($self, %arg) = @_;
 
-  my $path = delete $arg{path};
-  die "Required argument 'path' missing" unless defined $path;
   my $suffix = delete $arg{suffix}
     or die "Required argument 'suffix' missing";
   my $page_num = delete $arg{page_num} || 1;
 
-  $path .= '/' unless substr($path,-1) eq '/';
-  return sprintf "%sindex%s.%s", $path, $page_num == 1 ? '' : $page_num, $suffix;
+  return sprintf 'index%s.%s', $page_num == 1 ? '' : $page_num, $suffix;
 }
 
 sub _set_stash_dates {
