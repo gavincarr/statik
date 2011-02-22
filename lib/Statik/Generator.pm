@@ -287,6 +287,8 @@ sub _generate_post {
   die "Post file '$post_fullpath' has unexpected format - aborting" 
     unless $post_fullpath && $post_path;
   $post_path =~ s!^$self->{config}->{post_dir}/!!;
+  $post_path =~ s!/$!!;
+  $post_filename =~ s!\.$!!;
   $stash->set(post_fullpath => $post_fullpath);
   $stash->set(post_path     => $post_path);
   $stash->set(post_path_abs => "/$post_path");
