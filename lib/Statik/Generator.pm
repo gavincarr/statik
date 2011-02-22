@@ -237,10 +237,6 @@ sub _generate_page {
     );
   }
 
-  # Reset stash paths
-  $stash->set(path          => $path);
-  $stash->set(path_abs      => "/$path");
-
   # Foot
   my $foot_tmpl = $template_sub->( chunk => 'foot', flavour => $flavour, theme => $theme );
   $output .= $interpolate_sub->( template => $foot_tmpl, stash => $stash );
@@ -267,21 +263,24 @@ sub _generate_post {
     encoding => $self->{config}->{blog_encoding},
   );
 
+  # Update stash with post data (and there are X_unesc versions of these as well
+  # if flavour is set to xml_escape = yes (which is the default)
+  # post_path is set to the post_file (relative) path without the final suffix
+  (my $post_path = $post_file) =~ s/\.$self->{config}->{file_extension}$//o;
+  $stash->set(post_path     => $post_path);
+  $stash->set(post_path_abs => "/$post_path");
+  # post_headers are lowercased and mapped into header_xxx fields
+  $stash->set("header_\L$_" => $post->headers->{$_}) foreach keys %{$post->{headers}};
+  # post body is able in the 'body' field
+  $stash->set(body          => $post->body);
+
   # Post hook
   $self->{plugins}->call_all('post',
-    path          => $post,
+    path          => $post_path,
     template      => \$post_tmpl,
-    headers       => \{$post->headers},
-    body          => \{$post->body},
+    post          => $post,
+    stash         => $stash,
   );
-
-  # Update stash with post data
-  my $path = $post_file;
-  $path =~ s/\.$self->{config}->{file_extension}$/.$stash->{suffix}/ if ! $stash->{is_index};
-  $stash->set(path => $path);
-  $stash->set(path_abs => "/$path");
-  $stash->set("header_\L$_" => $post->headers->{$_}) foreach keys %{$post->{headers}};
-  $stash->set(body => $post->body);
 
   return $self->{interpolate_sub}->( template => $post_tmpl, stash => $stash );
 }
