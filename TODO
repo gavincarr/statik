@@ -5,13 +5,25 @@ o add initial end support to statik
 o add optional posts_flag support to entries_default, for signalling new/updated/deleted posts without a full check
 o write a first-pass Generator 
 o add initial interpolation functionality to Generator
+o add initial index page generation to Generator
+o get multipage indexes working
+o add file output to Generator
+o sort out/test escaping
+o redo Generator paging to be two-pass, so we can set page_total for rendering
+o add first-pass atom support
+o add initial stash date entries (post_{created,updated}_{date,iso8601,epoch}, index_updated_{d,i,e})
+o rename entries_default to Statik::Plugin::Entries
+o add post Date header parsing in Entries::post
 
-- add file output to Generator
-- add initial index page generation to Generator
-- rename entries_default to Statik::Plugin::Entries
+- add some initial unit tests
+
+- add date hook support to Generator
+- add initial Statik::Plugin::MasonBlocks
+- add initial Statik::Plugin::Markdown
+- try porting blosxom4nagios over to statik
 
 0.2
-- leaf page generation
+- add optional date-based index pages e.g. /2011/02/21 (cf. cronologue)
 - refactor entries_default to do removes on find leftovers, rather than as separate loop
 - move statik run code to Statik::run
 

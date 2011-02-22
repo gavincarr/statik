@@ -3,3 +3,5 @@ config/plugins.conf
 config/statik.conf
 posts/*
 state/*
+static/*
+templates/*
