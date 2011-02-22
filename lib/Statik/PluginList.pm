@@ -4,8 +4,9 @@ use strict;
 use Carp;
 
 my @DEFAULT_PLUGIN_LIST = qw(
-  entries_default
+  Statik::Plugin::Entries
   Statik::Plugin::Theme
+  Statik::Plugin::Atom
 );
 
 sub new {

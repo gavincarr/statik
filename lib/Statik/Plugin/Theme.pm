@@ -7,7 +7,6 @@ package Statik::Plugin::Theme;
 
 use strict;
 use parent qw(Statik::Plugin);
-use Carp;
 
 # Uncomment next line to enable debug output (don't uncomment debug() lines)
 #use Blosxom::Debug debug_level => 1;
@@ -48,9 +47,9 @@ sub template {
     my %args = @_;
 
     my $chunk = $args{chunk} ||
-      croak "Missing 'chunk' argument to Theme::template";
+      die "Missing 'chunk' argument to Theme::template";
     my $flavour = $args{flavour} || 
-      croak "Missing 'flavour' argument to Theme::template";
+      die "Missing 'flavour' argument to Theme::template";
     my $theme = $args{theme} || 'default';
     $theme = 'default' unless -d "$self->{theme_dir}/$theme";
 
@@ -132,7 +131,7 @@ The default statik theme, for instance, looks like this:
 
 Gavin Carr <gavin@openfusion.com.au>, http://www.openfusion.net/
 
-=head1 LICENSE
+=head1 LICENCE
 
 Copyright 2011, Gavin Carr.
 

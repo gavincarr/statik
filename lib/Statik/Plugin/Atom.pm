@@ -7,7 +7,6 @@ package Statik::Plugin::Atom;
 
 use strict;
 use parent qw(Statik::Plugin);
-use Carp;
 use URI;
 
 # Uncomment next line to enable debug output (don't uncomment debug() lines)
@@ -37,8 +36,7 @@ sub start {
 
 sub post {
   my ($self, %arg) = @_;
-  my $path = $arg{path} or croak "Missing path argument";
-  my $stash = $arg{stash} or croak "Missing stash argument";
+  my $stash = $arg{stash} or die "Missing stash argument";
 
   # Setup atom post items in stash
   # http://diveintomark.org/archives/2004/05/28/howto-atom-id
@@ -74,7 +72,7 @@ data to the statik stash for use by templates.
 
 Gavin Carr <gavin@openfusion.com.au>, http://www.openfusion.net/
 
-=head1 LICENSE
+=head1 LICENCE
 
 Copyright 2011, Gavin Carr.
 
