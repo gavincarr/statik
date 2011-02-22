@@ -85,7 +85,7 @@ sub _generate_post_pages {
   die "Path does not end in .$config->{file_extension}"
     unless $path =~ m/\.$config->{file_extension}$/o;
 
-  # Iterate over flavourrs
+  # Iterate over flavours
   for my $flavour (@{$config->{post_flavours}}) {
     my $fconfig = $config->flavour($flavour);
     my $suffix = $fconfig->{suffix} || $flavour;
@@ -128,10 +128,10 @@ sub _generate_index_pages {
     my $theme = $fconfig->{theme} || 'default';
     my $posts_per_page = $fconfig->{posts_per_page};
     $posts_per_page = $config->{posts_per_page} 
-      unless defined $posts_per_page;
+      unless $posts_per_page;
     my $max_pages = $fconfig->{max_pages};
     $max_pages = $config->{max_pages} 
-      unless defined $max_pages;
+      unless defined $max_pages && $max_pages ne '';
 
     my $post_tmpl = $self->{template_sub}->(
       chunk => 'post',
@@ -150,14 +150,13 @@ sub _generate_index_pages {
     my $page_num = 1;
     my $output;
     my $index_mtime = 0;
-    for my $post_file ( $self->{sort_sub}->($files) ) {
-      $post_file =~ s!$self->{config}->{post_dir}/!!;
+    for my $post_fullpath ( $self->{sort_sub}->($files) ) {
+      (my $post_file = $post_fullpath) =~ s!^$self->{config}->{post_dir}/!!;
 
       # Only interested in posts within $path
       next if $path && $post_file !~ m/^$path\b/;
-
       push @page_files, $post_file;
-      my $post_fullpath = "$self->{config}->{post_dir}/$post_file";
+
       my $mtime = stat($post_fullpath)->mtime;
       $index_mtime = $mtime if $mtime > $index_mtime;
 
@@ -169,6 +168,8 @@ sub _generate_index_pages {
         last if $page_num > $max_pages;
       }
     }
+    # Push any final partial page set
+    push @page_sets, [ @page_files ] if @page_files;
 
     # Now generate pages for each of the page sets
     my $page_total = @page_sets;
