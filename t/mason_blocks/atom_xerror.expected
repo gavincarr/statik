@@ -1,0 +1,1 @@
+post template error: MicroMason compilation failed: Missing right curly or square bracket at text template (compiled at /export/home/gavin/work/statik/t/../lib/Statik/Plugin/MasonBlocks.pm line 69) line 28, at end of line

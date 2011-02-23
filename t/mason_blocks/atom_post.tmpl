@@ -1,0 +1,28 @@
+%# Atom post template - testing if-else and nested ifs
+<entry>
+<title>$header_title</title>
+<link rel="alternate" type="text/html" href="$url/$post_path/$post_filename"/>
+<id>$atom_entry_id</id>
+<updated>$post_updated_iso8601</updated>
+% if ($post_author) {
+<author>
+%   if ($post_author_name) {
+  <name>$post_author_name</name>
+%   } else {
+  <name>$post_author</name>
+%   }
+%   if ($stash->{post_author_url}) {
+  <uri>$post_author_url</uri>
+%   }
+%   if ($post_author_email) {
+  <email>$post_author_email</email>
+%   }
+</author>
+% }
+</entry>
+<%doc>
+This is a long
+important
+multi-line comment.
+</%doc>
+

@@ -1,0 +1,12 @@
+<entry>
+<title>$header_title</title>
+<link rel="alternate" type="text/html" href="$url/$post_path/$post_filename"/>
+<id>$atom_entry_id</id>
+<updated>$post_updated_iso8601</updated>
+<author>
+  <name>$post_author_name</name>
+  <uri>$post_author_url</uri>
+  <email>$post_author_email</email>
+</author>
+</entry>
+
