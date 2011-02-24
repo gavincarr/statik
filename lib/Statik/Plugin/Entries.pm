@@ -46,7 +46,8 @@ sub entries {
   my $config = $self->config;
 
   $self->{update_flag} = 0;
-  $self->{index_file} = "$config->{state_dir}/$self->{entries_index}";
+  $self->{index_file} = "$config->{state_dir}/$self->{entries_index}"
+    if $self->{entries_index} ne '';
 
   my $files = {};
   my $symlinks = {};
@@ -54,7 +55,7 @@ sub entries {
   my $updates = {};
 
   # Read entries_index data
-  if (-f $self->{index_file}) {
+  if ($self->{index_file} && -f $self->{index_file}) {
     if (open my $fh, $self->{index_file})  {
       my $index_data = eval { local $/ = undef; decode_json <$fh> };
       if ($@) {
@@ -68,7 +69,7 @@ sub entries {
     }
     # debug(1, sprintf("loaded %d files, %d symlinks from %s", scalar keys %$files, scalar keys %$symlinks, $self->{entries_index}));
   }
-  else {
+  elsif ($self->{index_file}) {
     warn "[entries_default] no entries index '$self->{entries_index}' found\n";
   }
 
@@ -210,7 +211,7 @@ sub end {
   my $self = shift;
 
   # If updates, save back to index
-  if ($self->{updates_flag}) {
+  if ($self->{updates_flag} && $self->{index_file}) {
     # debug(1, "$self->{updates_flag} update(s), saving data to $self->{entries_index}");
     if (open my $index, '>', "$self->{index_file}.tmp") {
       print $index to_json({ 
