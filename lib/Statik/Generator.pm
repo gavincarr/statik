@@ -11,6 +11,7 @@ use Time::Piece;
 
 use Statik::Parser;
 use Statik::Stash;
+use Statik::Util qw(clean_path);
 
 sub new {
   my ($class, %arg) = @_;
@@ -33,8 +34,9 @@ sub new {
     my $template = delete $arg{template};
     my $stash = delete $arg{stash};
 
-    # Interpolate simple $name variables if found in stash
-    $template =~ s/\$(\w+)/defined $stash->{$1} ? $stash->{$1} : ''/ge;
+    # Interpolate simple $name or ${name} variables if found in stash
+    $template =~ s/(?<!\\) \$ \{? (\w+) \}? \n?
+                  /defined $stash->{$1} ? $stash->{$1} : ''/gex;
 
     return $template;
   };
@@ -98,11 +100,12 @@ sub _generate_post_pages {
     );
     if (! $post_tmpl) {
       warn "WARNING: no post template found for '$flavour' flavour - skipping\n";
-      return;
+      next;
     }
     my $path = dirname $path_filename;
     my $post_fullpath = "$config->{post_dir}/$path_filename";
-    (my $output_fullpath = $post_fullpath) =~ s/\.$config->{file_extension}$/.$suffix/;
+    my $output_fullpath = "$config->{static_dir}/$path_filename";
+    $output_fullpath =~ s/\.$config->{file_extension}$/.$suffix/;
 
     print "+ generating $flavour post page for '$path_filename'\n" if $self->{verbose};
     my $output = $self->_generate_page(
@@ -225,11 +228,9 @@ sub _generate_page {
   my $index_mtime = delete $arg{index_mtime};
   my $path = delete $arg{path};
   die "Invalid arguments: " . join(',', sort keys %arg) if %arg;
-
   $post_fullpaths = [ $post_fullpaths ] unless ref $post_fullpaths;
-  my $output = '';
-  my $template_sub = $self->{template_sub};
-  my $interpolate_sub = $self->{interpolate_sub};
+  # $path should always end with a '/' (unless it's empty)
+  $path = clean_path($path);
 
   # Setup stash
   my $stash = Statik::Stash->new(config => $self->{config}, flavour => $flavour);
@@ -237,8 +238,11 @@ sub _generate_page {
   $stash->set(page_total    => $page_total);
   $stash->set(is_index      => $is_index);
   $stash->set(path          => $path);
-  $stash->set(path_abs      => "/$path");
   $self->_set_stash_dates($stash, 'index_updated', $index_mtime) if $index_mtime;
+
+  my $template_sub = $self->{template_sub};
+  my $interpolate_sub = $self->{interpolate_sub};
+  my $output = '';
 
   # Head
   my $head_tmpl = $template_sub->( chunk => 'head', flavour => $flavour, theme => $theme );
@@ -287,11 +291,11 @@ sub _generate_post {
   die "Post file '$post_fullpath' has unexpected format - aborting" 
     unless $post_fullpath && $post_path;
   $post_path =~ s!^$self->{config}->{post_dir}/!!;
-  $post_path =~ s!/$!!;
+  $post_path = clean_path($post_path);
   $post_filename =~ s!\.$!!;
+
   $stash->set(post_fullpath => $post_fullpath);
   $stash->set(post_path     => $post_path);
-  $stash->set(post_path_abs => "/$post_path");
   $stash->set(post_filename => $post_filename);
 
   # post_headers are lowercased and mapped into header_xxx fields
@@ -319,7 +323,11 @@ sub _output {
   my $fullpath = delete $arg{fullpath};
   my $path = delete $arg{path};
 
-  $fullpath ||= "$self->{config}->{static_dir}/$path/" . $self->_generate_filename(%arg);
+  $fullpath ||= File::Spec->catfile(
+    $self->{config}->{static_dir},
+    $path ? $path : (),
+    $self->_generate_filename(%arg)
+  );
   
   if ($self->{noop}) {
     print "+ outputting $fullpath\n";
