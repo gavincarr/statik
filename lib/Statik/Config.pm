@@ -8,6 +8,9 @@ use File::Basename;
 use Config::Tiny;
 use Encode qw(decode);
 use Hash::Merge qw(merge);
+use URI;
+
+use Statik::Util qw(clean_path);
 
 my @main_required    = qw(url author_name blog_id_year);
 my %main_booleans    = map { $_ => 1 } qw(show_future_entries);
@@ -20,7 +23,6 @@ my %flavour_defaults = (
 sub new {
   my $class = shift;
   my %arg = @_;
-  $class = ref $class if ref $class;
 
   # Defaults
   my $self = bless { 
@@ -47,7 +49,7 @@ sub new {
     or die "Read of '$self->{_file} failed\n";
 
   # Promote all _config->{_} keys to top-level
-  my $encoding = $self->{_config}->{_}->{blog_encoding};
+  my $encoding = $self->{_config}->{_}->{blog_encoding} || $self->{blog_encoding};
   for (keys %{$self->{_config}->{_}}) {
     if (defined(my $val = delete $self->{_config}->{_}->{$_})) {
       $self->{decode($encoding, $_)} = decode($encoding, $val) if $val ne '';
@@ -56,6 +58,7 @@ sub new {
   delete $self->{_config}->{_};
 
   $self->_check_required;
+  $self->_dequote;
   $self->_split_composites;
   $self->_qualify_paths;
   $self->_map_booleans;
@@ -70,6 +73,15 @@ sub _check_required {
   for (@main_required) {
     die "Required config item '$_' is not defined - please set and try again\n"
       if ! defined $self->{$_} || $self->{$_} eq '';
+  }
+}
+
+# Remove quotes from top- and second-level values
+sub _dequote {
+  my $self = shift;
+  s/^(["'])(.*)\1$/$2/ foreach values %$self;
+  for my $section (keys %{$self->{_config}}) {
+    s/^(["'])(.*)\1$/$2/ foreach values %{$self->{_config}->{$section}};
   }
 }
 
@@ -113,6 +125,12 @@ sub _qualify_paths {
       $self->{$_} = File::Spec->rel2abs( $self->{$_}, $self->{base_dir} );
     }
   }
+
+  # Derive url_path and blog_id_domain, if not set
+  $self->{url} = clean_path($self->{url});
+  my $url = URI->new($self->{url});
+  $self->{blog_id_domain} ||= $url->host;
+  $self->{url_path} ||= clean_path($url->path);
 }
 
 # Map boolean strings to ints
@@ -161,6 +179,7 @@ sub to_stash {
 # Return flavour config
 sub flavour {
   my ($self, $flavour) = @_;
+  $self->{_config}->{"flavour:$flavour"} ||= { %flavour_defaults };
   return $self->{_config}->{"flavour:$flavour"};
 }
 
