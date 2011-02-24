@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>My Bløg</title> 
+  <subtitle>Mutterings from the &lt;dungeon&gt;</subtitle> 
+  <link href="http://example.com/testblog/"/>
+  <updated>2011-01-05T10:03:00+0000</updated>
+  <author>
+    <name>Jane Author</name>
+  </author> 
+  <id>tag:example.com,2010:/testblog/</id>
+  <generator uri="https://github.com/gavincarr/statik" version="0.1">Statik</generator>
+  <entry>
+    <title>Post the fifth</title>
+    <link href="http://example.com/testblog/sub2/fifth"/>
+    <id>tag:example.com,2011-01-05:/testblog/sub2/fifth</id>
+    <updated>2011-01-05T10:03:00+0000</updated>
+  </entry>
+  <entry>
+    <title>Post the fourth</title>
+    <link href="http://example.com/testblog/fourth"/>
+    <id>tag:example.com,2011-01-04:/testblog/fourth</id>
+    <updated>2011-01-04T14:15:16+0000</updated>
+  </entry>
+  <entry>
+    <title>Post the third</title>
+    <link href="http://example.com/testblog/third"/>
+    <id>tag:example.com,2011-01-03:/testblog/third</id>
+    <updated>2011-01-03T20:20:20+0000</updated>
+  </entry>
+  <entry>
+    <title>Post the second</title>
+    <link href="http://example.com/testblog/sub1/second"/>
+    <id>tag:example.com,2011-01-02:/testblog/sub1/second</id>
+    <updated>2011-01-02T08:30:00+0000</updated>
+  </entry>
+  <entry>
+    <title>Post the first</title>
+    <link href="http://example.com/testblog/first"/>
+    <id>tag:example.com,2011-01-01:/testblog/first</id>
+    <updated>2011-01-01T12:00:00+0000</updated>
+  </entry>
+</feed>

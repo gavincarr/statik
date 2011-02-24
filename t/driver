@@ -1,0 +1,28 @@
+# Test driver
+
+use Test::More;
+use File::Basename;
+use File::Remove qw(remove);
+use Test::Files;
+
+use FindBin qw($Bin);
+use lib "$Bin/../lib";
+use lib "$Bin/lib";
+use Statik::Test::Util qw(check_timestamps);
+
+(my $test_dir = basename $0) =~ s/^\d+_//;
+$test_dir =~ s/\.t$//;
+die "Missing test_dir '$test_dir'\n" unless -d $test_dir;
+
+# Setup
+remove(\1, "$test_dir/static/*");
+check_timestamps("$test_dir/posts");
+
+dir_only_contains_ok("$test_dir/static", [ qw(.gitignore) ], "$test_dir/static is empty");
+
+ok(system("$Bin/../bin/statik -c $test_dir/config/statik.conf") == 0, "$test_dir statik run ok");
+
+compare_dirs_ok("$test_dir/expected", "$test_dir/static", "$test_dir output matches expected");
+
+done_testing;
+
