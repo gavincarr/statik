@@ -1,4 +1,3 @@
-
 package Statik::Generator;
 
 use strict;
@@ -93,15 +92,6 @@ sub _generate_post_pages {
     my $fconfig = $config->flavour($flavour);
     my $suffix = $fconfig->{suffix} || $flavour;
     my $theme = $fconfig->{theme} || 'default';
-    my $post_tmpl = $self->{template_sub}->(
-      chunk => 'post',
-      flavour => $flavour,
-      theme => $theme,
-    );
-    if (! $post_tmpl) {
-      warn "WARNING: no post template found for '$flavour' flavour - skipping\n";
-      next;
-    }
     my $path = dirname $path_filename;
     my $post_fullpath = "$config->{post_dir}/$path_filename";
     my $output_fullpath = "$config->{static_dir}/$path_filename";
@@ -114,7 +104,6 @@ sub _generate_post_pages {
       theme => $theme,
       path => $path,
       post_fullpaths => $post_fullpath,
-      post_template => $post_tmpl,
     );
 
     $self->_output(output => $output, fullpath => $output_fullpath);
@@ -139,16 +128,6 @@ sub _generate_index_pages {
     my $max_pages = $fconfig->{max_pages};
     $max_pages = $config->{max_pages} 
       unless defined $max_pages && $max_pages ne '';
-
-    my $post_tmpl = $self->{template_sub}->(
-      chunk => 'post',
-      flavour => $flavour,
-      theme => $theme,
-    );
-    if (! $post_tmpl) {
-      warn "WARNING: no post template found for '$flavour' flavour - skipping\n";
-      return;
-    }
 
     # Group post files into N sets of $posts_per_page posts
     # (we do this in two passes to calculate page_total before we render)
@@ -192,7 +171,6 @@ sub _generate_index_pages {
         theme           => $theme,
         path            => $path,
         post_fullpaths  => $page_files,
-        post_template   => $post_tmpl,
         page_num        => $page_num,
         page_total      => $page_total,
         index_mtime     => $index_mtime,
@@ -215,15 +193,14 @@ sub _generate_page {
   # Check arguments
   my $flavour = delete $arg{flavour} 
     or die "Required argument 'flavour' missing";
+  my $theme = delete $arg{theme}
+    or die "Required argument 'theme' missing";
   my $suffix = delete $arg{suffix} 
     or die "Required argument 'suffix' missing";
   my $post_fullpaths = delete $arg{post_fullpaths}
     or die "Required argument 'post_fullpaths' missing";
-  my $post_tmpl = delete $arg{post_template}
-    or die "Required argument 'post_template' missing";
   my $page_num = delete $arg{page_num} || 1;
   my $page_total = delete $arg{page_total} || 1;
-  my $theme = delete $arg{theme};
   my $is_index = delete $arg{is_index};
   my $index_mtime = delete $arg{index_mtime};
   my $path = delete $arg{path};
@@ -244,20 +221,25 @@ sub _generate_page {
   my $interpolate_sub = $self->{interpolate_sub};
   my $output = '';
 
-  # Head
+  # Head hook
   my $head_tmpl = $template_sub->( chunk => 'head', flavour => $flavour, theme => $theme );
   $output .= $interpolate_sub->( template => $head_tmpl, stash => $stash );
 
   # Posts
+  my $current_date = '';
   for (my $i = 0; $i <= $#$post_fullpaths; $i++) {
-    $output .= $self->_generate_post(
+    my ($date_output, $post_output) = $self->_generate_post(
       post_fullpath => $post_fullpaths->[$i],
-      post_template => $post_tmpl, 
-      stash => $stash,
+      flavour       => $flavour,
+      theme         => $theme,
+      stash         => $stash,
     );
+    $output .= $date_output if $date_output && $date_output ne $current_date;
+    $output .= $post_output;
+    $current_date = $date_output;
   }
 
-  # Foot
+  # Foot hook
   my $foot_tmpl = $template_sub->( chunk => 'foot', flavour => $flavour, theme => $theme );
   $output .= $interpolate_sub->( template => $foot_tmpl, stash => $stash );
 
@@ -270,11 +252,15 @@ sub _generate_post {
   # Check arguments
   my $post_fullpath = delete $arg{post_fullpath}
     or die "Required argument 'post_fullpath' missing";
-  my $post_tmpl = delete $arg{post_template}
-    or die "Required argument 'post_template' missing";
+  my $flavour = delete $arg{flavour} 
+    or die "Required argument 'flavour' missing";
+  my $theme = delete $arg{theme} 
+    or die "Required argument 'theme' missing";
   my $stash = delete $arg{stash}
     or die "Required argument 'stash' missing";
   die "Invalid arguments: " . join(',', sort keys %arg) if %arg;
+
+  my $template_sub = $self->{template_sub};
 
   # Parse post
   my $post = Statik::Parser->new(
@@ -283,8 +269,8 @@ sub _generate_post {
     encoding => $self->{config}->{blog_encoding},
   );
 
-  # Update stash with post data (and there are X_unesc versions of these too 
-  # if flavour.xml_escape = yes, which is the default)
+  # Update stash with post data (note there are also X_unesc versions of
+  # these if flavour.xml_escape is set - which is the default)
   # post_path is the post_file (relative) path without the filename
   # post_filename is the post_file basename without the file_extension
   my ($post_filename, $post_path) = fileparse($post_fullpath, $self->{config}->{file_extension});
@@ -306,13 +292,16 @@ sub _generate_post {
   $self->_set_stash_dates($stash, 'post_created', $self->{files}->{$post_fullpath});
   $self->_set_stash_dates($stash, 'post_updated', stat($post_fullpath)->mtime);
 
-  # Post hook
-  $self->{plugins}->call_all('post',
-    template      => \$post_tmpl,
-    stash         => $stash,
-  );
+  # Date hook
+  my $date_tmpl = $template_sub->( chunk => 'date', flavour => $flavour, theme => $theme );
+  my $date_output = $self->{interpolate_sub}->( template => $date_tmpl, stash => $stash );
 
-  return $self->{interpolate_sub}->( template => $post_tmpl, stash => $stash );
+  # Post hook
+  my $post_tmpl = $template_sub->( chunk => 'post', flavour => $flavour, theme => $theme );
+  $self->{plugins}->call_all( 'post', template => \$post_tmpl, stash => $stash );
+  my $post_output = $self->{interpolate_sub}->( template => $post_tmpl, stash => $stash );
+
+  return ($date_output, $post_output);
 }
 
 sub _output {
@@ -356,15 +345,77 @@ sub _generate_filename {
   return sprintf 'index%s.%s', $page_num == 1 ? '' : $page_num, $suffix;
 }
 
+# Set various date elements in stash (for post_created, post_updated ts)
 sub _set_stash_dates {
   my ($self, $stash, $label, $epoch) = @_;
   die "epoch unset for $stash->{post_path} / $label" if ! defined $epoch;
 
   my $t = ref $epoch ? $epoch : Time::Piece->strptime($epoch, '%s');
 
+  $stash->set($label                => $t);
+
+  # Set some standard useful date elements
   $stash->set("${label}_epoch"      => $t->epoch);
-  $stash->set("${label}_date"       => $t->strftime('%Y-%m-%d'));
+  $stash->set("${label}_date"       => $t->date);               # %Y-%m-%d
+  $stash->set("${label}_time"       => $t->time);               # %H:%M:%S
   $stash->set("${label}_iso8601"    => $t->strftime('%Y-%m-%dT%T%z'));
+
+  # Set blosxom-like date elements
+  $stash->set("${label}_yr"         => $t->year);               # 2011
+  $stash->set("${label}_mo_num"     => $t->strftime('%m'));     # 02
+  $stash->set("${label}_mo"         => $t->month);              # Feb
+  $stash->set("${label}_da"         => $t->strftime('%d'));     # 05
+  $stash->set("${label}_dw"         => $t->day);                # Sat
+  $stash->set("${label}_ti"         => $t->strftime('%H:%M'));  # 12:32
+  $stash->set("${label}_utc_offset" => $t->strftime('%z'));     # +1100
+  if ($label eq 'post_created') {
+    $stash->set("yr"                => $t->year);               # 2011
+    $stash->set("mo_num"            => $t->strftime('%m'));     # 02
+    $stash->set("mo"                => $t->month);              # Feb
+    $stash->set("da"                => $t->strftime('%d'));     # 05
+    $stash->set("dw"                => $t->day);                # Sat
+    $stash->set("ti"                => $t->strftime('%H:%M'));  # 12:32
+    $stash->set("utc_offset"        => $t->strftime('%z'));     # +1100
+  }
+
+  # And some useful extras
+  $stash->set("${label}_mday"       => $t->mday);               # 5
+  $stash->set("${label}_fullmonth"  => $t->fullmonth);          # February
+  $stash->set("${label}_fullday"    => $t->fullday);            # Saturday
 }
 
 1;
+
+=head1 NAME
+
+Statik::Generator - class for generating actual statik output pages
+
+=head1 SYNOPSIS
+
+  use Statik::Generator;
+
+
+
+=head1 DESCRIPTION
+
+Statik::Generator is the statik class responsible for the actual generation
+of statik output pages.
+
+=head1 SEE ALSO
+
+Statik
+
+=head1 AUTHOR
+
+Gavin Carr <gavin@openfusion.com.au>
+
+=head1 COPYRIGHT AND LICENCE
+
+Copyright (C) Gavin Carr 2011.
+
+This library is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself, either Perl version 5.8.0 or, at
+your option, any later version of Perl 5.
+
+=cut
+
