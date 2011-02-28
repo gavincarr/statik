@@ -246,6 +246,9 @@ sub _generate_page {
   return $output if $output;
 }
 
+# Generate/render the flavour/themed output for a post.
+# Called once per post per theme/flavour.
+# Returns a two-element list: ($date_output, $post_output).
 sub _generate_post {
   my ($self, %arg) = @_;
 
@@ -352,36 +355,36 @@ sub _set_stash_dates {
 
   my $t = ref $epoch ? $epoch : Time::Piece->strptime($epoch, '%s');
 
-  $stash->set($label                => $t);
-
-  # Set some standard useful date elements
-  $stash->set("${label}_epoch"      => $t->epoch);
-  $stash->set("${label}_date"       => $t->date);               # %Y-%m-%d
-  $stash->set("${label}_time"       => $t->time);               # %H:%M:%S
-  $stash->set("${label}_iso8601"    => $t->strftime('%Y-%m-%dT%T%z'));
-
-  # Set blosxom-like date elements
-  $stash->set("${label}_yr"         => $t->year);               # 2011
-  $stash->set("${label}_mo_num"     => $t->strftime('%m'));     # 02
-  $stash->set("${label}_mo"         => $t->month);              # Feb
-  $stash->set("${label}_da"         => $t->strftime('%d'));     # 05
-  $stash->set("${label}_dw"         => $t->day);                # Sat
-  $stash->set("${label}_ti"         => $t->strftime('%H:%M'));  # 12:32
-  $stash->set("${label}_utc_offset" => $t->strftime('%z'));     # +1100
-  if ($label eq 'post_created') {
-    $stash->set("yr"                => $t->year);               # 2011
-    $stash->set("mo_num"            => $t->strftime('%m'));     # 02
-    $stash->set("mo"                => $t->month);              # Feb
-    $stash->set("da"                => $t->strftime('%d'));     # 05
-    $stash->set("dw"                => $t->day);                # Sat
-    $stash->set("ti"                => $t->strftime('%H:%M'));  # 12:32
-    $stash->set("utc_offset"        => $t->strftime('%z'));     # +1100
+  if ($label) {
+    $stash->set($label => $t);
+    $label .= '_';
   }
 
+  # Set some generally useful date elements
+  $stash->set("${label}epoch"      => $t->epoch);
+  $stash->set("${label}date"       => $t->date);               # %Y-%m-%d
+  $stash->set("${label}time"       => $t->time);               # %H:%M:%S
+  $stash->set("${label}iso8601"    => $t->strftime('%Y-%m-%dT%T%z'));
+
+  # Set blosxom-like date elements
+  $stash->set("${label}yr"         => $t->year);               # 2011
+  $stash->set("${label}mo_num"     => $t->strftime('%m'));     # 02
+  $stash->set("${label}mo"         => $t->month);              # Feb
+  $stash->set("${label}da"         => $t->strftime('%d'));     # 05
+  $stash->set("${label}dw"         => $t->day);                # Sat
+  $stash->set("${label}ti"         => $t->strftime('%H:%M'));  # 12:32
+  $stash->set("${label}utc_offset" => $t->strftime('%z'));     # +1100
+
   # And some useful extras
-  $stash->set("${label}_mday"       => $t->mday);               # 5
-  $stash->set("${label}_fullmonth"  => $t->fullmonth);          # February
-  $stash->set("${label}_fullday"    => $t->fullday);            # Saturday
+  $stash->set("${label}mday"       => $t->mday);               # 5
+  $stash->set("${label}fullmonth"  => $t->fullmonth);          # February
+  $stash->set("${label}fullday"    => $t->fullday);            # Saturday
+
+  # For blosxom-compatibility and simplicity, also set un-prefixed versions
+  # of all post_created timestamps e.g. qw(dw da mo mo_num yr ti date time)
+  if ($label eq 'post_created_') {
+    $self->_set_stash_dates($stash, '' => $t);
+  }
 }
 
 1;
