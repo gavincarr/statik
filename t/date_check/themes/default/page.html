@@ -1,0 +1,36 @@
+<!-- statik date -->
+<div id="date">$post_created_fullday $post_created_mday $post_created_fullmonth $post_created_yr</div>
+
+
+<!-- statik head -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="$blog_language" lang="$blog_language">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=$blog_encoding" />
+<title>$blog_title</title>
+<link rel="stylesheet" type="text/css" href="style-original.css" />
+<link rel="alternate" type="application/atom+xml" title="$blog_title feed" href="${url}index.atom" />
+</head>
+<body>
+<div id="header">
+<h1>$blog_title</h1>
+<p class="tagline">$blog_description</p>
+</div>
+<div id="body">
+
+
+<!-- statik post -->
+<div id="article">
+<h2><a href="$url$post_path$post_filename" rel="bookmark" title="link to this post">$header_title</a></h2>
+<div id="timestamp">$dw $da $mo $yr $time $utc_offset</div>
+$body_unesc
+</div>
+
+
+<!-- statik foot -->
+</div>
+<div id="footer">
+Copyright $yr $author_name.
+</div>
+</body>
+</html>
