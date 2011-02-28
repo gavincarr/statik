@@ -46,7 +46,8 @@ for my $template_file (glob "$data_dir/*.tmpl") {
   eval { $plugin->_munge_template(hook => 'post', template => \$template, stash => $stash) };
   if ($expected) {
     if ($@) {
-      eq_or_diff($@, $expected, "template " . basename($template_file) . " died ok");
+      (my $error = $@) =~ s/ \(compiled.*//;
+      eq_or_diff($error, $expected, "template " . basename($template_file) . " died ok");
     } 
     else {
       eq_or_diff($template, $expected, "template " . basename($template_file) . " ok");
