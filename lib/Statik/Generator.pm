@@ -223,6 +223,7 @@ sub _generate_page {
 
   # Head hook
   my $head_tmpl = $template_sub->( chunk => 'head', flavour => $flavour, theme => $theme );
+  $self->{plugins}->call_all( 'head', template => \$head_tmpl, stash => $stash );
   $output .= $interpolate_sub->( template => $head_tmpl, stash => $stash );
 
   # Posts
@@ -241,6 +242,7 @@ sub _generate_page {
 
   # Foot hook
   my $foot_tmpl = $template_sub->( chunk => 'foot', flavour => $flavour, theme => $theme );
+  $self->{plugins}->call_all( 'foot', template => \$foot_tmpl, stash => $stash );
   $output .= $interpolate_sub->( template => $foot_tmpl, stash => $stash );
 
   return $output if $output;
@@ -297,6 +299,7 @@ sub _generate_post {
 
   # Date hook
   my $date_tmpl = $template_sub->( chunk => 'date', flavour => $flavour, theme => $theme );
+  $self->{plugins}->call_all( 'date', template => \$date_tmpl, stash => $stash );
   my $date_output = $self->{interpolate_sub}->( template => $date_tmpl, stash => $stash );
 
   # Post hook
