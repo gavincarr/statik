@@ -24,7 +24,8 @@ sub defaults {
 
 sub start {
   my $self = shift;
-  $self->{mason} = Text::MicroMason->new;
+  $self->{mason} = Text::MicroMason->new
+    or die "Mason instantiation failed: $!";
 }
 
 sub head {
@@ -43,7 +44,8 @@ sub foot {
 }
 
 sub post {
-  my ($self, %arg) = @_;
+  my $self = shift;
+  my %arg = @_;
   my $stash = $arg{stash};
   if ($self->{munge_post_bodies}) {
     $self->_munge_template(template => \$stash->{post_body}, stash => $stash);
