@@ -235,9 +235,10 @@ sub _generate_page {
       theme         => $theme,
       stash         => $stash,
     );
-    $output .= $date_output if $date_output && $date_output ne $current_date;
+    my $post_date = $stash->{post_created_date};
+    $output .= $date_output if $post_date && $post_date ne $current_date;
     $output .= $post_output;
-    $current_date = $date_output;
+    $current_date = $post_date;
   }
 
   # Foot hook
