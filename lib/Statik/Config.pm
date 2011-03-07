@@ -172,7 +172,9 @@ sub keys {
 # Return a hash/hashref of all non-private keys with scalar values
 sub to_stash {
   my $self = shift;
-  my %stash = map { $_ => $self->{$_} } grep { ! /^_/ && ! ref $self->{$_} } keys %$self;
+  my %stash = map  { $_ => $self->{$_} }
+              grep { ! /^_/ && ! ref $self->{$_} }
+              CORE::keys %$self;
   return wantarray ? %stash : \%stash;
 }
 
