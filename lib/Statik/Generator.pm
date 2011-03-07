@@ -17,12 +17,9 @@ sub new {
   my $self = bless {}, ref $class || $class;
 
   # Check arguments
-  for (qw(config plugins files)) {      # required
+  for (qw(config options plugins files)) {      # required
     $self->{$_} = delete $arg{$_} 
       or croak "Required argument '$_' missing";
-  }
-  for (qw(verbose noop)) {              # optional
-    $self->{$_} = delete $arg{$_};
   }
   croak "Invalid arguments: " . join(',', sort keys %arg) if %arg;
 
@@ -58,7 +55,7 @@ sub generate_updates {
 
   my @updates = sort keys %$updates or return;
   printf "+ Generating pages for %d updated posts\n", scalar @updates
-    if $self->{verbose};
+    if $self->{options}->{verbose};
 
   $self->_generate_index_pages('');
 
@@ -97,7 +94,8 @@ sub _generate_post_pages {
     my $output_fullpath = "$config->{static_dir}/$path_filename";
     $output_fullpath =~ s/\.$config->{file_extension}$/.$suffix/;
 
-    print "+ generating $flavour post page for '$path_filename'\n" if $self->{verbose};
+    print "+ generating $flavour post page for '$path_filename'\n"
+      if $self->{options}->{verbose};
     my $output = $self->_generate_page(
       flavour => $flavour,
       suffix => $suffix,
@@ -116,7 +114,7 @@ sub _generate_index_pages {
   my $config = $self->{config};
 
   mkdir "$config->{static_dir}/$path", 0755
-    unless -d "$config->{static_dir}/$path" || $self->{noop};
+    unless -d "$config->{static_dir}/$path" || $self->{options}->{noop};
   for my $flavour (@{$config->{index_flavours}}) {
     # Get theme, posts_per_page and max_pages settings
     my $fconfig = $config->flavour($flavour);
@@ -164,7 +162,7 @@ sub _generate_index_pages {
     for my $page_files (@page_sets) {
       printf "+ generating %s index page %d/%d for '%s' (entries = %d)\n",
         $flavour, $page_num, $page_total, $path || '/', scalar @$page_files
-          if $self->{verbose};
+          if $self->{options}->{verbose};
       $output = $self->_generate_page(
         flavour         => $flavour,
         suffix          => $suffix,
@@ -325,7 +323,7 @@ sub _output {
     $self->_generate_filename(%arg)
   );
   
-  if ($self->{noop}) {
+  if ($self->{options}->{noop}) {
     print "+ outputting $fullpath\n";
     return;
   }

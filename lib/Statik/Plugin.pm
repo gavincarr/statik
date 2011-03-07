@@ -11,8 +11,10 @@ sub new {
   my $self = bless {}, ref $class || $class;
 
   # Check arguments
-  $self->{_config} = delete $arg{config} 
+  $self->{_config} = delete $arg{config}
     or croak "Required argument 'config' missing";
+  $self->{_options} = delete $arg{options}
+    or croak "Required argument 'options' missing";
   croak "Invalid arguments: " . join(',', sort keys %arg) if %arg;
 
   # Initialise
@@ -39,6 +41,11 @@ sub defaults {
 sub config {
   my $self = shift;
   return $self->{_config};
+}
+
+sub options {
+  my $self = shift;
+  return $self->{_options};
 }
 
 1;

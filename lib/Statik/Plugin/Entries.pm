@@ -146,10 +146,10 @@ sub entries {
 
         # If the index for this file is out-of-date, add to updates list
         my $index_file = "$config->{static_dir}/$path/index.$config->{index_flavours}->[0]";
-        if ($config->{force}
+        if ($self->options->{force}
             or ! -f $index_file
             or stat($index_file)->mtime < $mtime) {
-          # debug(3, "index_file $index_file out of date") unless $config->{force};
+          # debug(3, "index_file $index_file out of date") unless $self->options->{force};
           $updates->{$path_filename_ext} = 1;
           $max_mtime = $mtime if $mtime > $max_mtime;
         }

@@ -13,8 +13,10 @@ sub new {
   my $self = bless {}, ref $class || $class;
 
   # Check arguments
-  $self->{config} = delete $arg{config} 
+  $self->{config} = delete $arg{config}
     or croak "Required argument 'config' missing";
+  $self->{options} = delete $arg{options}
+    or croak "Required argument 'options' missing";
   croak "Invalid arguments: " . join(',', sort keys %arg) if %arg;
 
   $self->{plugin_list} = $self->{config}->{plugin_list};
@@ -72,7 +74,10 @@ sub _load_plugins {
       next;
     }
 
-    push @{$self->{plugins}}, $plugin->new(config => $self->{config});
+    push @{$self->{plugins}}, $plugin->new(
+      config => $self->{config},
+      options => $self->{options},
+    );
   }
   shift @INC foreach @{$self->{plugin_path}};
 }
@@ -134,7 +139,7 @@ Statik::PluginList - class holding the list of currently active statik plugins
   use Statik::PluginList;
   
   # Load plugins using config plugin_list and plugin_path
-  $plugins = Statik::PluginList->new(config => $config);
+  $plugins = Statik::PluginList->new(config => $config, options => $options);
 
   # Return full plugin list
   @plugins = $plugins->plugins;
