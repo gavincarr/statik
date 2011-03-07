@@ -1,5 +1,5 @@
 ---
-abstract: ~
+abstract: 'Statik is a lightweight text-based static blogging engine, inspired by blosxom'
 author:
   - 'Gavin Carr <gavin@openfusion.com.au>'
 build_requires:
@@ -29,6 +29,7 @@ requires:
   Time::Piece: 0
   URI: 0
   parent: 0
+  perl: 5.6.0
 resources:
   license: http://dev.perl.org/licenses/
 version: 0.01
