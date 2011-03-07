@@ -3,13 +3,10 @@
 use strict;
 use warnings;
 use Getopt::Long::Descriptive;
-use YAML;
 
 use FindBin qw($Bin);
 use lib "$Bin/../lib";
-use Statik::Config;
-use Statik::PluginList;
-use Statik::Generator;
+use Statik;
 
 $|++;
 
@@ -25,35 +22,13 @@ my ($opt, $usage) = describe_options(
 print($usage->text), exit if $opt->help;
 print($usage->text), exit if @ARGV;
 
-# Load config file
-my $config = Statik::Config->new(file => $opt->config);
-$config->{$_} = $opt->$_ foreach qw(force noop verbose);
-print Dump $config if $opt->verbose >= 2;
-
-# Load plugins
-my $plugins = Statik::PluginList->new(config => $config);
-print Dump $plugins if $opt->verbose >= 2;
-
-#my ($template_sub) = $plugins->call_first('template');
-
-# Hook: entries
-print "+ Loading entries from $config->{post_dir}\n" if $opt->verbose;
-my ($files, $updates) = $plugins->call_first('entries', config => $config);
-printf "+ Found %d post files, %d updated\n", 
-  scalar keys %$files, scalar keys %$updates if $opt->verbose;
-
-# Generate static pages
-my $gen = Statik::Generator->new(
-  config    => $config,
-  plugins   => $plugins,
-  files     => $files,
-  verbose   => $opt->verbose,
+my $s = Statik->new(
+  config    => $opt->config,
+  force     => $opt->force,
   noop      => $opt->noop,
+  verbose   => $opt->verbose || 0,
 );
-$gen->generate_updates(updates => $updates);
-
-# Hook: end
-$plugins->call_all('end');
+$s->generate;
 
 __END__
 
