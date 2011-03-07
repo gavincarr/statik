@@ -17,14 +17,16 @@ my $stash = {
   post_author_email => 'gavin@openfusion.net',
 };
 
-(my $data_dir = basename $0) =~ s/^\d+_//;
-$data_dir =~ s/\.t$//;
-die "Missing data_dir '$data_dir'\n" unless -d $data_dir;
+(my $test_dir = basename $0) =~ s!^\d+_!/!;
+$test_dir =~ s/\.t$//;
+$test_dir = dirname($0) . "/$test_dir";
+die "Missing test_dir '$test_dir'\n" unless -d $test_dir;
 
 my ($plugin, $template, $expected);
-ok($plugin = Statik::Plugin::MasonBlocks->new(config => {}), "plugin instantiated ok");
+ok($plugin = Statik::Plugin::MasonBlocks->new(config => {}, options => {}), 
+  "plugin instantiated ok");
 
-for my $template_file (glob "$data_dir/*.tmpl") {
+for my $template_file (glob "$test_dir/*.tmpl") {
   open my $fh, '<', $template_file or die "open of $template_file failed: $!";
   {
     local $/ = undef;
