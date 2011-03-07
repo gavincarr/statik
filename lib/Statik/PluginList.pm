@@ -128,6 +128,12 @@ sub call_all {
   }
 }
 
+# Trivial convert-to-hash
+sub TO_JSON {
+  my $self = shift;
+  return { %$self };
+}
+
 1;
 
 =head1 NAME

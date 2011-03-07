@@ -185,4 +185,10 @@ sub flavour {
   return $self->{_config}->{"flavour:$flavour"};
 }
 
+# Trivial convert-to-hash
+sub TO_JSON {
+  my $self = shift;
+  return { %$self };
+}
+
 1;
