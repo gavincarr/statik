@@ -1,7 +1,14 @@
-.*.swp
+.git
+.*.sw?
 config/plugins.conf
 config/statik.conf
 posts/*
 state/*
 static/*
-templates/*
+blib*
+pm_to_blib*
+Makefile
+Makefile.old
+Build
+Build.bat
+MANIFEST.bak
