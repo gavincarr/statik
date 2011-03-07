@@ -1,6 +1,6 @@
-statik is a minimalist static blogging engine inspired by blosxom.
-Posts are simple text files with headers, which are used to generate
-static web pages (html, atom, etc.) to be served by a standard
+statik is a lightweight text-based static blogging engine, inspired
+by blosxom. Posts are simple text files with headers, which are used to
+generate static web pages (html, atom, etc.) to be served by a standard
 webserver like apache or nginx.
 
 No databases or dynamic web infrastructure is required, meaning you
@@ -10,4 +10,3 @@ perl >= 5.8.
 
 Dynamic elements, like comments and comment threads, are possible
 with javascript.
-
