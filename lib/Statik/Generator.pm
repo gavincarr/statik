@@ -275,8 +275,9 @@ sub _generate_post {
 
   # Update stash with post data (note there are also X_unesc versions of
   # these if flavour.xml_escape is set - which is the default)
-  # post_path is the post_file (relative) path without the filename
-  # post_filename is the post_file basename without the file_extension
+  # post_fullpath is the absolute path to the text post file, including file_extension
+  # post_path is the post_fullpath path relative to post_dir, and without the filename
+  # post_filename is the post_fullpath basename without the file_extension
   my ($post_filename, $post_path) = fileparse($post_fullpath, $self->{config}->{file_extension});
   die "Post file '$post_fullpath' has unexpected format - aborting" 
     unless $post_fullpath && $post_path;
@@ -284,17 +285,20 @@ sub _generate_post {
   $post_path = clean_path($post_path);
   $post_filename =~ s!\.$!!;
 
+  # Post path entries
   $stash->set(post_fullpath => $post_fullpath);
   $stash->set(post_path     => $post_path);
   $stash->set(post_filename => $post_filename);
 
-  # post_headers are lowercased and mapped into header_xxx fields
-  $stash->set("header_\L$_" => $post->headers->{$_}) foreach keys %{$post->{headers}};
-  # post body is able in the 'body' field
-  $stash->set(body          => $post->body);
   # Post date entries
   $self->_set_stash_dates($stash, 'post_created', $self->{files}->{$post_fullpath});
   $self->_set_stash_dates($stash, 'post_updated', stat($post_fullpath)->mtime);
+
+  # Post header and body entries
+  $stash->set(headers       => $post->headers);
+  $stash->set(body          => $post->body);
+  # post_headers are also lowercased and mapped into header_xxx fields
+  $stash->set("header_\L$_" => $post->headers->{$_}) foreach keys %{$post->{headers}};
 
   # Date hook
   my $date_tmpl = $template_sub->( chunk => 'date', flavour => $flavour, theme => $theme );
