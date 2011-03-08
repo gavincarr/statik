@@ -11,4 +11,3 @@
 </author> 
 <id>tag:$blog_id_domain,$blog_id_year:$path_abs</id>
 <generator uri="https://github.com/gavincarr/statik" version="0.1">Statik</generator>
-
