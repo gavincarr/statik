@@ -8,6 +8,7 @@ use Test::Files;
 use FindBin qw($Bin);
 use lib "$Bin/../lib";
 use lib "$Bin/lib";
+use Statik;
 use Statik::Test::Util qw(check_timestamps);
 
 (my $test_base = basename $0) =~ s!^\d+_!!;
@@ -15,13 +16,16 @@ $test_base =~ s/\.t$//;
 my $test_dir = dirname($0) . '/' . $test_base;
 die "Missing test_dir '$test_dir'\n" unless -d $test_dir;
 
+my $s;
+
 # Setup
 remove(\1, "$test_dir/static/*");
 check_timestamps("$test_dir/posts");
 
 dir_only_contains_ok("$test_dir/static", [ qw(.gitignore) ], "$test_base/static is empty");
 
-ok(system("$Bin/../bin/statik -c $test_dir/config/statik.conf") == 0, "$test_base statik run ok");
+ok($s = Statik->new(config => "$test_dir/config/statik.conf"), "$test_base statik instantiation ok: $s");
+ok($s->generate, 'generate ok');
 
 compare_dirs_ok("$test_dir/expected", "$test_dir/static", "$test_base output matches expected");
 
