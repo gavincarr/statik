@@ -112,9 +112,9 @@ sub entries {
         # Return unless a match
         return unless $File::Find::name =~ 
           m! ^ \Q$config->{post_dir}\E / (?:(.*)/)? (.+) \. $config->{file_extension} $ !xo;
-        (my $path_filename_ext = $File::Find::name) =~ s!^\Q$config->{post_dir}\E/!!;
-        my $path = $1;
+        my $path = $1 || '';
         my $filename = $2;
+        (my $path_filename_ext = $File::Find::name) =~ s!^\Q$config->{post_dir}\E/!!;
         # Return if an index, a dotfile, or unreadable
         if ( $filename eq 'index' or $filename =~ /^\./ or ! -r $File::Find::name ) {
           # debug(1, "[entries_default] '$path_filename_ext' is an index, a dotfile, or is unreadable - skipping\n");
