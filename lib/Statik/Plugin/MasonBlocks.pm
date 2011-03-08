@@ -48,7 +48,8 @@ sub post {
   my %arg = @_;
   my $stash = $arg{stash};
   if ($self->{munge_post_bodies}) {
-    $self->_munge_template(template => \$stash->{post_body}, stash => $stash);
+    $self->_munge_template(template => \$stash->{body}, stash => $stash);
+    $self->_munge_template(template => \$stash->{body_unesc}, stash => $stash);
   }
   $self->_munge_template(hook => 'post', @_);
 }
@@ -81,6 +82,9 @@ sub _munge_template {
     die "$hook template error: $lines[0]\n";
   }
   else {
+    # Trim trailing whitespace
+    $munged =~ s/\s+\z/\n/s;
+
     $$template_ref = $munged;
   }
 }
