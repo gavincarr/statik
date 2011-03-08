@@ -17,9 +17,9 @@ my $stash = {
   post_author_email => 'gavin@openfusion.net',
 };
 
-(my $test_dir = basename $0) =~ s!^\d+_!/!;
-$test_dir =~ s/\.t$//;
-$test_dir = dirname($0) . "/$test_dir";
+(my $test_base = basename $0) =~ s!^\d+_!!;
+$test_base =~ s/\.t$//;
+my $test_dir = dirname($0) . '/' . $test_base;
 die "Missing test_dir '$test_dir'\n" unless -d $test_dir;
 
 my ($plugin, $template, $expected);
