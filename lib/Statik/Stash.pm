@@ -52,14 +52,236 @@ sub get {
 sub set {
   my ($self, $key, $value) = @_;
   if ($self->{_xml_escape} && defined $value) {
-    $self->{$key . "_unesc"} = $value;
+    $self->{"${key}_unesc"} = $value;
     $value =~ s/($escape_re)/$escape{$1}/g;
     $self->{$key} = $value;
   }
   else {
     $self->{$key} = $value;
+    $self->{"${key}_unesc"} = $value;
   }
 }
 
 1;
 
+=head1 NAME
+
+Statik::Stash - stash class used for passing statik variables through to templates
+
+=head1 SYNOPSIS
+
+  # Most statik plugin hooks are passed a reference to the stash, and
+  # can add their own values to it (preferably namespaced) using set():
+  $stash->set(myplugin_section => 5);
+  $stash->set(myplugin_topic => 'Hello World!');
+
+  # The set_as_date() method also exists, which expects an epoch seconds
+  # or Time::Piece value, and adds an additional set of derived variables:
+  $stash->set_as_date(myplugin_naptime => localtime);
+
+
+  # Statik templates can then reference those variables directly using
+  # $variable strings e.g. referencing the above values in a statik
+  # template fragment:
+  <div id="section">Section $myplugin_section</div>
+  <h2>Topic: $myplugin_topic</h2>
+
+
+=head1 DESCRIPTION
+
+Statik::Stash is a simple blessed hashref used to pass statik variables
+through to templates. It is instantiated by the statik core and is
+associated with a particular flavour/theme and path.
+
+A core set of stash variables are populated by statik itself. In
+addition, the stash object is passed to most plugin hook subroutines,
+allowing plugins to add their own (preferably namespaced) variables to
+the stash, and/or modify existing ones.
+
+Stash values are then used when interpolating into templates. The default
+interpolator replaces occurrences of '$variable' with the value found in
+$stash->{variable}.
+
+For instance, a template fragement might read:
+
+  <div id="section">Section $myplugin_section</div>
+  <h2>Topic: $myplugin_topic</h2>
+
+which might be interpolated into:
+
+  <div id="section">Section 5</div>
+  <h2>Topic: Hello World!</h2>
+
+
+=head2 CORE STASH VARIABLES
+
+Statik sets the following stash variables for all hooks after 'head':
+
+=over 4
+
+=item path
+
+The path for the current collection or post, relative to the main
+config post_dir, and without any filename.
+
+Note that (relative) paths in Statik always begin without a '/', and end
+with a '/' (unless they're an empty string), so that simple path
+concatenation works cleanly.
+
+=item is_index
+
+Flag, set to 1 if this is an index page (as opposed to a post page).
+
+=item page_num
+
+For index pages, the number of this page (beginning at 1) in the current
+collection.
+
+=item page_total
+
+For index pages, the total number of pages in the current collection.
+
+=item index_updated
+
+A datetime variable (see L<set_as_date> above) represending the mtime of the
+newest post in the current collection.
+
+=back
+
+Statik sets the following stash variables for 'post' hooks:
+
+=over 4
+
+=item post_fullpath
+
+The absolute filesystem path to the post text file, including file_extension.
+
+=item post_path
+
+The path component of post_fullpath relative to the main config post_dir, and
+without the filename.
+
+Note that (relative) paths in Statik always begin without a '/', and end
+with a '/' (unless they're an empty string), so that simple path
+concatenation works cleanly.
+
+=item post_filename
+
+post_fullpath basename (i.e. filename, without any path), without file_extension.
+
+=item post_created
+
+A datetime variable (see L<set_as_date> above) representing the nominal creation
+datetime for this post (either as set explicitly via a header, or from the earliest
+mtime seen by Statik for this post).
+
+=item post_updated
+
+A datetime variable (see L<set_as_date> above) representing the current mtime
+of this post.
+
+=item headers
+
+A hashref (header => value) of the full set of headers for this post.
+
+=item body
+
+A string holding the current post body (xml-escaped as usual, if the xml-escape
+flag is set for the current flavour. body_unesc also exists as usual, if you
+want the raw unescaped version).
+
+=item header_XXX
+
+A set of post header variables, one per header. Note that header names
+are lowercased, so that the B<Subject> header would be found in
+B<header_subject>, the B<Date> header would be found in B<header_date>,
+etc.
+
+=back
+
+
+=head2 METHODS
+
+=over 4
+
+=item set(variable => value)
+
+set is used to add new variables to the stash. If the flavour associated
+with the stash has its B<xml_escape> flag set, then the value added to
+the stash will be the xml-escaped version of the input parameter, and a
+second variable called ${variable}_unesc is also added containing the
+original unescaped version.
+
+If the flavour's xml_escape flag is not set, $variable and ${variable}_unesc
+keys are both still added to the stash, but their values will be identical.
+
+=item set_as_date(variable => value)
+
+set_as_date is an alternative setter specifically for datetimes, that
+accepts only values that are epoch seconds or Time::Piece objects. It
+stores the value in the stash as a Time::Piece object, and additionally
+stores a whole series of derived entries, named with suffixes appended
+to $variable. For instance, if variable was 'index_updated', the derived
+entries would look like 'index_updated_epoch', 'index_updated_date',
+'index_updated_iso8601', etc.
+
+The core set of derived entries are:
+
+=over 4
+
+=item ${variable}_epoch
+
+The datetime in epoch seconds.
+
+=item ${variable}_date
+
+=item ${variable}_time
+
+=item ${variable}_iso8601
+
+=item ${variable}_yr
+
+=item ${variable}_mo_num
+
+=item ${variable}_mo
+
+=item ${variable}_da
+
+=item ${variable}_dw
+
+=item ${variable}_ti
+
+=item ${variable}_utc_offset
+
+=item ${variable}_mday
+
+=item ${variable}_fullmonth
+
+=item ${variable}_fullday
+
+=back
+
+=item get(variable)
+
+get is a trivial getter, included for completeness.
+
+=back
+
+
+=head1 SEE ALSO
+
+L<Statik>
+
+=head1 AUTHOR
+
+Gavin Carr <gavin@openfusion.com.au>
+
+=head1 COPYRIGHT AND LICENCE
+
+Copyright (C) Gavin Carr 2011.
+
+This library is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself, either Perl version 5.8.0 or, at
+your option, any later version of Perl 5.
+
+=cut
