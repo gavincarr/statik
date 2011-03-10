@@ -62,6 +62,47 @@ sub set {
   }
 }
 
+# Set the value of $key to $value (must be epoch seconds or a Time::Piece
+# object), and also derive and store various other date elements from it
+sub set_as_date {
+  my ($self, $key, $value) = @_;
+  die "Invalid date value '$value' for '$key' - not seconds or Time::Piece object\n"
+    unless $value =~ /^\d+$/ or (ref $value && $value->isa('Time::Piece'));
+
+  my $t = ref $value ? $value : Time::Piece->strptime($value, '%s');
+
+  if ($key) {
+    $self->{$key} = $t;
+    $key .= '_';
+  }
+
+  # Set some generally useful date elements
+  $self->{${key} . "epoch"}         = $t->epoch;
+  $self->{${key} . "date"}          = $t->date;               # %Y-%m-%d
+  $self->{${key} . "time"}          = $t->time;               # %H:%M:%S
+  $self->{${key} . "iso8601"}       = $t->strftime('%Y-%m-%dT%T%z');
+
+  # Set blosxom-like date elements
+  $self->{${key} . "yr"}            = $t->year;               # 2011
+  $self->{${key} . "mo_num"}        = $t->strftime('%m');     # 02
+  $self->{${key} . "mo"}            = $t->month;              # Feb
+  $self->{${key} . "da"}            = $t->strftime('%d');     # 05
+  $self->{${key} . "dw"}            = $t->day;                # Sat
+  $self->{${key} . "ti"}            = $t->strftime('%H:%M');  # 12:32
+  $self->{${key} . "utc_offset"}    = $t->strftime('%z');     # +1100
+
+  # And some useful extras
+  $self->{${key} . "mday"}          = $t->mday;               # 5
+  $self->{${key} . "fullmonth"}     = $t->fullmonth;          # February
+  $self->{${key} . "fullday"}       = $t->fullday;            # Saturday
+
+  # For blosxom-compatibility and simplicity, also set un-prefixed versions
+  # of all post_created timestamps e.g. qw(dw da mo mo_num yr ti date time)
+  if ($key eq 'post_created_') {
+    $self->set_as_date('' => $t);
+  }
+}
+
 1;
 
 =head1 NAME
