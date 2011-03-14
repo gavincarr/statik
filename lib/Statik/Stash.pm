@@ -221,22 +221,17 @@ mtime seen by Statik for this post).
 A datetime variable (see L<set_as_date> above) representing the current mtime
 of this post.
 
-=item headers
+=item header_XXX
 
-A hashref (header => value) of the full set of headers for this post.
+A set of post header variables, one per header. Header names are lowercased, so 
+that the B<Title> header would be found in B<header_title>, the B<Date> header in 
+B<header_date>, etc.
 
 =item body
 
 A string holding the current post body (xml-escaped as usual, if the xml-escape
 flag is set for the current flavour. body_unesc also exists as usual, if you
 want the raw unescaped version).
-
-=item header_XXX
-
-A set of post header variables, one per header. Note that header names
-are lowercased, so that the B<Subject> header would be found in
-B<header_subject>, the B<Date> header would be found in B<header_date>,
-etc.
 
 =back
 

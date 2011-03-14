@@ -294,11 +294,9 @@ sub _generate_post {
   $stash->set_as_date(post_created  => $self->{files}->{$post_fullpath});
   $stash->set_as_date(post_updated  => stat($post_fullpath)->mtime);
 
-  # Post header and body entries
-  $stash->set(headers       => $post->headers);
-  $stash->set(body          => $post->body);
-  # post_headers are also lowercased and mapped into header_xxx fields
+  # post_headers are lowercased and mapped into header_xxx fields
   $stash->set("header_\L$_" => $post->headers->{$_}) foreach keys %{$post->{headers}};
+  $stash->set(body          => $post->body);
 
   # Date hook
   my $date_tmpl = $template_sub->( chunk => 'date', flavour => $flavour, theme => $theme );
