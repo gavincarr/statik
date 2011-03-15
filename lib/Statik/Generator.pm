@@ -10,7 +10,6 @@ use Time::Piece;
 
 use Statik::Parser;
 use Statik::Stash;
-use Statik::Util qw(clean_path);
 
 sub new {
   my ($class, %arg) = @_;
@@ -204,15 +203,13 @@ sub _generate_page {
   my $path = delete $arg{path};
   die "Invalid arguments: " . join(',', sort keys %arg) if %arg;
   $post_fullpaths = [ $post_fullpaths ] unless ref $post_fullpaths;
-  # $path should always end with a '/' (unless it's empty)
-  $path = clean_path($path);
 
   # Setup stash
   my $stash = Statik::Stash->new(config => $self->{config}, flavour => $flavour);
   $stash->set(page_num      => $page_num);
   $stash->set(page_total    => $page_total);
   $stash->set(is_index      => $is_index);
-  $stash->set(path          => $path);
+  $stash->set_as_path(path  => $path);
   $stash->set_as_date(index_updated => $index_mtime) if $index_mtime;
 
   my $template_sub = $self->{template_sub};
@@ -282,12 +279,11 @@ sub _generate_post {
   die "Post file '$post_fullpath' has unexpected format - aborting" 
     unless $post_fullpath && $post_path;
   $post_path =~ s!^$self->{config}->{post_dir}/!!;
-  $post_path = clean_path($post_path);
   $post_filename =~ s!\.$!!;
 
   # Post path entries
   $stash->set(post_fullpath => $post_fullpath);
-  $stash->set(post_path     => $post_path);
+  $stash->set_as_path(post_path => $post_path);
   $stash->set(post_filename => $post_filename);
 
   # Post date entries

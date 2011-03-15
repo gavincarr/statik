@@ -2,6 +2,7 @@ package Statik::Stash;
 
 use strict;
 use Carp;
+use Statik::Util qw(clean_path);
 
 # In xml_escape mode, we escape the fields here, and any set via 'set'
 my @escape_fields = qw(blog_title blog_description url);
@@ -60,6 +61,12 @@ sub set {
     $self->{$key} = $value;
     $self->{"${key}_unesc"} = $value;
   }
+}
+
+# Set the value of $key to $value (runs clean_path on value, no unescaping)
+sub set_as_path {
+  my ($self, $key, $value) = @_;
+  $self->{$key} = clean_path($value);
 }
 
 # Set the value of $key to $value (must be epoch seconds or a Time::Piece
@@ -250,6 +257,12 @@ original unescaped version.
 
 If the flavour's xml_escape flag is not set, $variable and ${variable}_unesc
 keys are both still added to the stash, but their values will be identical.
+
+=item set_as_path(variable => value)
+
+set_as_path is a setter for paths - runs L<Statik::Util::clean_path> on
+value (removing leading '/' characters, and adding a trailing '/'), and
+skips unescaping.
 
 =item set_as_date(variable => value)
 
