@@ -20,7 +20,7 @@ sub defaults {
     # Where do your themes live? (if relative, 'base_dir' is prefixed)
     theme_dir               => 'themes',
     # What's the URL of your themes directory (if relative, 'url' is prefixed)
-    theme_dir_url           => 'themes',
+    theme_url               => 'themes',
   };
 }
 
@@ -34,8 +34,8 @@ sub start {
   # Qualify config items if required
   $self->{theme_dir} = "$config->{base_dir}/$self->{theme_dir}"
     if substr($self->{theme_dir},0,1) ne '/';
-  $self->{theme_dir_url} = "$config->{url}/$self->{theme_dir_url}"
-    if substr($self->{theme_dir_url},0,1) ne '/';
+  $self->{theme_url} = "$config->{url}$self->{theme_url}"
+    if substr($self->{theme_url},0,1) ne '/';
 }
 
 # Template hook - return a subroutine that takes named 'flavour', 'theme' and 
@@ -90,6 +90,13 @@ sub template {
   };
 }
 
+# Add config paths to stash
+sub head {
+  my ($self, %arg) = @_;
+  $arg{stash}->set_as_path(theme_dir    => $self->{theme_dir});
+  $arg{stash}->set_as_path(theme_url    => $self->{theme_url});
+}
+
 1;
 
 __END__
@@ -108,7 +115,7 @@ To configure, add a section like the following to your statik.conf file
     # Where do your themes live? (if relative, 'base_dir' is prefixed)
     theme_dir = themes
     # What's the URL of your themes directory (if relative, 'url' is prefixed)
-    theme_dir_url = themes
+    theme_url = themes
 
 
 =head1 DESCRIPTION
