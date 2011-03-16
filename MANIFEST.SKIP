@@ -1,1 +1,15 @@
-.gitignore
+\.git\b
+\.gitignore$
+\.sw.$
+^config/plugins.conf$
+^config/statik.conf$
+^posts/
+^state/
+^static/
+^blib/
+^pm_to_blib$
+^Makefile$
+^Makefile.old$
+^Build$
+^Build.bat$
+^MANIFEST.bak$

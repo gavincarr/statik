@@ -1,4 +1,3 @@
-.git
 .*.sw?
 config/plugins.conf
 config/statik.conf
