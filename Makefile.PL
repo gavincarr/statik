@@ -21,6 +21,8 @@ requires        'Time::Piece';
 requires        'URI';
 
 install_script  'bin/statik';
+install_share   'themes';
+
 auto_install;
 
 WriteAll;

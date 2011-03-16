@@ -19,6 +19,7 @@ no_index:
   directory:
     - inc
     - t
+    - themes
 requires:
   Config::Tiny: 0
   Encode: 0
