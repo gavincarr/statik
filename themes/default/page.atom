@@ -17,6 +17,7 @@
     <link href="$url$post_path$post_filename"/>
     <id>tag:$blog_id_domain,$post_created_date:/$url_path$post_path$post_filename</id>
     <updated>$post_updated_iso8601</updated>
+    <content>$body</content>
   </entry>
 
 <!-- statik foot -->
