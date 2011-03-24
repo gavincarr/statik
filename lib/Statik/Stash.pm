@@ -95,7 +95,11 @@ sub set_as_date {
   $self->{${key} . "mo"}            = $t->month;              # Feb
   $self->{${key} . "da"}            = $t->strftime('%d');     # 05
   $self->{${key} . "dw"}            = $t->day;                # Sat
-  $self->{${key} . "ti"}            = $t->strftime('%H:%M');  # 12:32
+  $self->{${key} . "ti"}            = $t->strftime('%H:%M');  # 13:32
+  $self->{${key} . "hr"}            = $t->strftime('%H');     # 13
+  $self->{${key} . "hr12"}          = $t->strftime('%H')%12;  # 1
+  $self->{${key} . "min"}           = $t->strftime('%M');     # 32
+  $self->{${key} . "ampm"}          = $t->strftime('%H') >= 12 ? 'pm' : 'am';
   $self->{${key} . "utc_offset"}    = $t->strftime('%z');     # +1100
 
   # And some useful extras
@@ -299,6 +303,14 @@ The datetime in epoch seconds.
 =item ${variable}_dw
 
 =item ${variable}_ti
+
+=item ${variable}_hr
+
+=item ${variable}_hr12
+
+=item ${variable}_min
+
+=item ${variable}_ampm
 
 =item ${variable}_utc_offset
 
