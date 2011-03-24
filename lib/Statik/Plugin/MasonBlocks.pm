@@ -17,6 +17,8 @@ sub defaults {
   return {
     # Whether we munge post bodies as well as templates (default: no)
     munge_post_bodies => 0,
+    # Comma-separated list of variables to default to '' in templates
+    define_variables => '',
   };
 }
 
@@ -57,13 +59,18 @@ sub post {
 sub _munge_template {
   my ($self, %arg) = @_;
   my $template_ref = $arg{template};
-  my $stash = $arg{stash};
   my $hook = $arg{hook} || '[unknown]';
+  my %stash = %{$arg{stash}};
+
+  # Add our define_variables list to %stash
+  for my $var (split /\s*,\s*/, $self->{define_variables}) {
+    $stash{$var} = '' if not defined $self->{$var};
+  }
 
   # Compile an arg list for Text::MicroMason. We could use -PassVariables
-  # instead, but that only passes scalars, not e.g. $stash as a hashref
+  # instead, but that only passes scalars, not e.g. \%stash as a hashref
   my $args_section = "<%args>\n";
-  $args_section .= "\$$_\n" foreach sort keys %$stash;
+  $args_section .= "\$$_\n" foreach sort keys %stash;
   $args_section .= "\$stash\n";
   $args_section .= "</%args>\n";
 
@@ -72,8 +79,8 @@ sub _munge_template {
     $self->{mason}->execute(
       text => "$args_section$$template_ref",
       {},
-      %$stash,
-      stash => $stash,
+      %stash,
+      stash => \%stash,
     ); 
   };
   if ($@) {
