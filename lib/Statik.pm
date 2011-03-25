@@ -30,14 +30,16 @@ sub new {
 
   # Load config file
   $self->{config} = Statik::Config->new(file => $self->{configfile});
-  print $json->encode($self->{config}) if $self->{options}->{verbose} >= 2;
+  print $json->encode($self->{config})
+    if $self->{options}->{verbose} >= 2;
 
   # Load plugins
   $self->{plugins} = Statik::PluginList->new(
     config  => $self->{config},
     options => $self->{options},
   );
-  print $json->encode($self->{plugins}) if $self->{options}->{verbose} >= 2;
+  print $json->encode($self->{plugins})
+    if $self->{options}->{verbose} >= 2;
 
   return $self;
 }
