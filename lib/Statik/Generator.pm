@@ -16,7 +16,7 @@ sub new {
   my $self = bless {}, ref $class || $class;
 
   # Check arguments
-  for (qw(config options plugins files)) {      # required
+  for (qw(config options plugins files files_list)) {      # required
     $self->{$_} = delete $arg{$_} 
       or croak "Required argument '$_' missing";
   }
@@ -34,10 +34,6 @@ sub new {
                   /defined $stash->{$1} ? $stash->{$1} : ''/gex;
 
     return $template;
-  };
-  $self->{sort_sub} = sub {
-    my ($files) = @_;
-    return sort { $files->{$b} <=> $files->{$a} } keys %$files;
   };
 
   $self;
@@ -66,6 +62,7 @@ sub generate_updates {
       $current_path .= '/' if $current_path;
       $current_path .= $path_elt;
       next if $done{$current_path}++;
+print "$current_path\n";
       if (@path_elt) {
         $self->_generate_index_pages($current_path);
       }
@@ -133,7 +130,7 @@ sub _generate_index_pages {
     my $page_num = 1;
     my $output;
     my $index_mtime = 0;
-    for my $post_fullpath ( $self->{sort_sub}->($files) ) {
+    for my $post_fullpath (@{ $self->{files_list} }) {
       die "Missing post file '$post_fullpath'" unless -f $post_fullpath;
       (my $post_file = $post_fullpath) =~ s!^$self->{config}->{post_dir}/!!;
 

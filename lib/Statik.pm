@@ -58,12 +58,21 @@ sub generate {
     scalar keys %$files, scalar keys %$updates 
       if $self->{options}->{verbose};
 
+  # Hook: sort
+  # TODO: hookify
+  my $sort_sub = sub {
+    my ($files) = @_;
+    return sort { $files->{$b} <=> $files->{$a} } keys %$files;
+  };
+  my @files = $sort_sub->( $files );
+
   # Generate static pages
   my $gen = Statik::Generator->new(
     config      => $config,
     options     => $options,
     plugins     => $plugins,
     files       => $files,
+    files_list  => \@files,
   );
   $gen->generate_updates(updates => $updates);
 
