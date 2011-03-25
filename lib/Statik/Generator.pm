@@ -15,8 +15,8 @@ sub new {
   my ($class, %arg) = @_;
   my $self = bless {}, ref $class || $class;
 
-  # Check arguments
-  for (qw(config options plugins files files_list)) {      # required
+  # Check required arguments
+  for (qw(config options plugins entries_map entries_list page_paths)) {
     $self->{$_} = delete $arg{$_} 
       or croak "Required argument '$_' missing";
   }
@@ -39,36 +39,16 @@ sub new {
   $self;
 }
 
-# Generate updated post and index pages for the given post files
-sub generate_updates {
-  my ($self, %arg) = @_;
+# Generate pages for all page_paths
+sub generate {
+  my $self = shift;
 
-  # Check arguments
-  my $updates = delete $arg{updates} 
-    or die "Required argument 'updates' missing";
-  die "Invalid arguments: " . join(',', sort keys %arg) if %arg;
-
-  my @updates = sort keys %$updates or return;
-  printf "+ Generating pages for %d updated posts\n", scalar @updates
-    if $self->{options}->{verbose};
-
-  $self->_generate_index_pages('');
-
-  my %done = ( '' => 1 );
-  for my $path (@updates) {
-    my $current_path = '';
-    my @path_elt = split m!/!, $path;
-    while (my $path_elt = shift @path_elt) {
-      $current_path .= '/' if $current_path;
-      $current_path .= $path_elt;
-      next if $done{$current_path}++;
-print "$current_path\n";
-      if (@path_elt) {
-        $self->_generate_index_pages($current_path);
-      }
-      else {
-        $self->_generate_post_pages($current_path);
-      }
+  for my $path (@{ $self->{page_paths} }) {
+    if (-f File::Spec->catfile($self->{config}->{post_dir}, $path)) {
+      $self->_generate_post_pages($path);
+    }
+    else {
+      $self->_generate_index_pages($path);
     }
   }
 }
@@ -125,12 +105,12 @@ sub _generate_index_pages {
 
     # Group post files into N sets of $posts_per_page posts
     # (we do this in two passes to calculate page_total before we render)
-    my $files = clone $self->{files};
+    my $files = clone $self->{entries_map};
     my (@page_files, @page_sets);
     my $page_num = 1;
     my $output;
     my $index_mtime = 0;
-    for my $post_fullpath (@{ $self->{files_list} }) {
+    for my $post_fullpath (@{ $self->{entries_list} }) {
       die "Missing post file '$post_fullpath'" unless -f $post_fullpath;
       (my $post_file = $post_fullpath) =~ s!^$self->{config}->{post_dir}/!!;
 
@@ -284,7 +264,7 @@ sub _generate_post {
   $stash->set(post_filename => $post_filename);
 
   # Post date entries
-  $stash->set_as_date(post_created  => $self->{files}->{$post_fullpath});
+  $stash->set_as_date(post_created  => $self->{entries_map}->{$post_fullpath});
   $stash->set_as_date(post_updated  => stat($post_fullpath)->mtime);
 
   # post_headers are lowercased and mapped into header_xxx fields
