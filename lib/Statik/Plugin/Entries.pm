@@ -1,4 +1,4 @@
-# Statik Plugin: Statik::Plugin::Entries
+# Name: Statik::Plugin::Entries
 # Author(s): Gavin Carr <gavin@openfusion.com.au>
 # Version: 0.001
 # Documentation: See the bottom of this file or type: perldoc Statik::Plugin::Entries

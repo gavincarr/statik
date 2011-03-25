@@ -1,4 +1,4 @@
-# Statik Plugin: Statik::Plugin::Theme
+# Name: Statik::Plugin::Theme
 # Author(s): Gavin Carr <gavin@openfusion.com.au>
 # Version: 0.001
 # Documentation: see bottom of file or type 'perldoc Statik::Plugin::Theme'

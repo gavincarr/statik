@@ -1,4 +1,4 @@
-# Statik Plugin: Statik::Plugin::MasonBlocks
+# Name: Statik::Plugin::MasonBlocks
 # Author(s): Gavin Carr <gavin@openfusion.com.au>
 # Version: 0.001
 # Documentation: see bottom of file or type 'perldoc Statik::Plugin::MasonBlocks'
@@ -64,7 +64,7 @@ sub _munge_template {
 
   # Add our define_variables list to %stash
   for my $var (split /\s*,\s*/, $self->{define_variables}) {
-    $stash{$var} = '' if not defined $self->{$var};
+    $stash{$var} = '' if not defined $stash{$var};
   }
 
   # Compile an arg list for Text::MicroMason. We could use -PassVariables
