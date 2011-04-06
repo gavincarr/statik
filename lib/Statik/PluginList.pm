@@ -124,9 +124,18 @@ sub call_first {
 sub call_all {
   my ($self, $hook, @args) = @_;
 
+  my @return_values;
   for my $plugin ($self->plugins($hook)) {
-    $plugin->$hook(@args);
+    if (defined wantarray) {
+      push @return_values, $plugin->$hook(@args);
+    }
+    else {
+      $plugin->$hook(@args);
+    }
   }
+
+  return unless defined wantarray;
+  return @return_values;
 }
 
 # Trivial convert-to-hash
