@@ -45,17 +45,22 @@ sub generate {
 
   for my $path (@{ $self->{page_paths} }) {
     if (-f File::Spec->catfile($self->{config}->{post_dir}, $path)) {
-      $self->_generate_post_pages($path);
+      $self->generate_post_pages(path_filename => $path);
     }
     else {
-      $self->_generate_index_pages($path);
+      $self->generate_index_pages(path => $path);
     }
   }
 }
 
 # Generate single post pages (one per post_flavour) for the given path element
-sub _generate_post_pages {
-  my ($self, $path_filename) = @_;
+sub generate_post_pages {
+  my ($self, %arg) = @_;
+
+  # Check arguments
+  my $path_filename = delete $arg{path_filename} 
+    or die "Required argument 'path_filename' missing";
+
   my $config = $self->{config};
   die "Path does not end in .$config->{file_extension}"
     unless $path_filename =~ m/\.$config->{file_extension}$/o;
@@ -84,13 +89,22 @@ sub _generate_post_pages {
   }
 }
 
-# Generate index (multi-post) pages (one per index_flavour) for the given path element
-sub _generate_index_pages {
-  my ($self, $path) = @_;
-  my $config = $self->{config};
+# Generate index (multi-post) pages (one per index_flavour) for $path
+sub generate_index_pages {
+  my ($self, %arg) = @_;
 
+  # Check arguments
+  my $path = delete $arg{path};
+  die "Required argument 'path' missing" unless defined $path;
+  my $post_list = delete $arg{post_list};
+  if (! $post_list or (ref $post_list and @$post_list == 0)) {
+    $post_list = $self->{entries_list};
+  }
+
+  my $config = $self->{config};
   mkdir "$config->{static_dir}/$path", 0755
     unless -d "$config->{static_dir}/$path" || $self->{options}->{noop};
+
   for my $flavour (@{$config->{index_flavours}}) {
     # Get theme, posts_per_page and max_pages settings
     my $fconfig = $config->flavour($flavour);
@@ -105,12 +119,11 @@ sub _generate_index_pages {
 
     # Group post files into N sets of $posts_per_page posts
     # (we do this in two passes to calculate page_total before we render)
-    my $files = clone $self->{entries_map};
     my (@page_files, @page_sets);
     my $page_num = 1;
     my $output;
     my $index_mtime = 0;
-    for my $post_fullpath (@{ $self->{entries_list} }) {
+    for my $post_fullpath (@$post_list) {
       die "Missing post file '$post_fullpath'" unless -f $post_fullpath;
       (my $post_file = $post_fullpath) =~ s!^$self->{config}->{post_dir}/!!;
 
