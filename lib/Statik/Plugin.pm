@@ -15,6 +15,8 @@ sub new {
     or croak "Required argument 'config' missing";
   $self->{_options} = delete $arg{options}
     or croak "Required argument 'options' missing";
+  $self->{_posts} = delete $arg{posts}
+    or croak "Required argument 'posts' missing";
   croak "Invalid arguments: " . join(',', sort keys %arg) if %arg;
 
   # Initialise
@@ -46,6 +48,11 @@ sub config {
 sub options {
   my $self = shift;
   return $self->{_options};
+}
+
+sub posts {
+  my $self = shift;
+  return $self->{_posts};
 }
 
 1;

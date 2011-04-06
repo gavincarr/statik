@@ -57,7 +57,7 @@ sub paths {
     }
   }
 
-  return wantarray ? %paths : \%paths;
+  return %paths;
 }
 
 1;

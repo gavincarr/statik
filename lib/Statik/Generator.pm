@@ -8,7 +8,6 @@ use File::stat;
 use File::Basename;
 use Time::Piece;
 
-use Statik::Parser;
 use Statik::Stash;
 
 sub new {
@@ -16,7 +15,7 @@ sub new {
   my $self = bless {}, ref $class || $class;
 
   # Check required arguments
-  for (qw(config options plugins entries_map entries_list generate_paths)) {
+  for (qw(config options posts plugins entries_map entries_list generate_paths)) {
     $self->{$_} = delete $arg{$_} 
       or croak "Required argument '$_' missing";
   }
@@ -251,12 +250,8 @@ sub _generate_post {
 
   my $template_sub = $self->{template_sub};
 
-  # Parse post
-  my $post = Statik::Parser->new(
-    file => $post_fullpath,
-    # TODO: maybe we should have a separate file_encoding setting?
-    encoding => $self->{config}->{blog_encoding},
-  );
+  # Fetch parsed post
+  my $post = $self->{posts}->fetch(path => $post_fullpath);
 
   # Update stash with post data (note there are also X_unesc versions of
   # these if flavour.xml_escape is set - which is the default)

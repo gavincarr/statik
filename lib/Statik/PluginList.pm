@@ -18,6 +18,8 @@ sub new {
     or croak "Required argument 'config' missing";
   $self->{options} = delete $arg{options}
     or croak "Required argument 'options' missing";
+  $self->{posts} = delete $arg{posts}
+    or croak "Required argument 'posts' missing";
   croak "Invalid arguments: " . join(',', sort keys %arg) if %arg;
 
   $self->{plugin_list} = $self->{config}->{plugin_list};
@@ -76,8 +78,9 @@ sub _load_plugins {
     }
 
     push @{$self->{plugins}}, $plugin->new(
-      config => $self->{config},
-      options => $self->{options},
+      config    => $self->{config},
+      options   => $self->{options},
+      posts     => $self->{posts},
     );
   }
   shift @INC foreach @{$self->{plugin_path}};

@@ -7,6 +7,7 @@ use Carp;
 use FindBin qw($Bin);
 use lib "$Bin/../lib";
 use Statik::Config;
+use Statik::Posts;
 use Statik::PluginList;
 use Statik::Generator;
 
@@ -33,10 +34,14 @@ sub new {
   print $self->{json}->encode($self->{config})
     if $self->{options}->{verbose} >= 2;
 
+  # Setup posts cache
+  $self->{posts} = Statik::Posts->new(encoding => $self->{config}->{blog_encoding});
+
   # Load plugins
   $self->{plugins} = Statik::PluginList->new(
     config  => $self->{config},
     options => $self->{options},
+    posts   => $self->{posts},
   );
   print $self->{json}->encode($self->{plugins})
     if $self->{options}->{verbose} >= 2;
@@ -47,7 +52,6 @@ sub new {
 sub generate {
   my $self = shift;
   my $config = $self->{config};
-  my $options = $self->{options};
   my $plugins = $self->{plugins};
 
   # Hook: entries
@@ -80,7 +84,8 @@ sub generate {
   # Generate static pages
   my $gen = Statik::Generator->new(
     config          => $config,
-    options         => $options,
+    options         => $self->{options},
+    posts           => $self->{posts},
     plugins         => $plugins,
     entries_map     => $entries,
     entries_list    => \@entries_list,

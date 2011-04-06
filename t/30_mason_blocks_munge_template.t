@@ -23,7 +23,7 @@ my $test_dir = dirname($0) . '/' . $test_base;
 die "Missing test_dir '$test_dir'\n" unless -d $test_dir;
 
 my ($plugin, $template, $expected);
-ok($plugin = Statik::Plugin::MasonBlocks->new(config => {}, options => {}), 
+ok($plugin = Statik::Plugin::MasonBlocks->new(config => {}, options => {}, posts => {}), 
   "plugin instantiated ok");
 
 for my $template_file (glob "$test_dir/*.tmpl") {
