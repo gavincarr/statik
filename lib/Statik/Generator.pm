@@ -43,12 +43,12 @@ sub new {
 sub generate {
   my $self = shift;
 
-  for my $path (@{ $self->{generate_paths} }) {
+  for my $path (sort keys %{ $self->{generate_paths} }) {
     if (-f File::Spec->catfile($self->{config}->{post_dir}, $path)) {
       $self->generate_post_pages(path_filename => $path);
     }
     else {
-      $self->generate_index_pages(path => $path);
+      $self->generate_index_pages(path => $path, posts => $self->{generate_paths}->{$path});
     }
   }
 }
@@ -96,10 +96,12 @@ sub generate_index_pages {
   # Check arguments
   my $path = delete $arg{path};
   die "Required argument 'path' missing" unless defined $path;
-  my $post_list = delete $arg{post_list};
-  if (! $post_list or (ref $post_list and @$post_list == 0)) {
-    $post_list = $self->{entries_list};
-  }
+  my $posts = delete $arg{posts}
+    or die "Required argument 'posts' missing";
+  ref $posts and ref $posts eq 'ARRAY'
+    or die "Invalid 'posts' argument '$posts' - not an arrayref";
+  @$posts
+    or die "Invalid 'posts' argument - empty arrayref";
 
   my $config = $self->{config};
   mkdir "$config->{static_dir}/$path", 0755
@@ -122,12 +124,9 @@ sub generate_index_pages {
     my $page_num = 1;
     my $output;
     my $index_mtime = 0;
-    for my $post_fullpath (@$post_list) {
+    for my $post_fullpath (@$posts) {
       die "Missing post file '$post_fullpath'" unless -f $post_fullpath;
       (my $post_file = $post_fullpath) =~ s!^$self->{config}->{post_dir}/!!;
-
-      # Only interested in posts within $path
-      next if $path && $post_file !~ m/^$path\b/;
       push @page_files, $post_fullpath;
 
       my $mtime = stat($post_fullpath)->mtime;

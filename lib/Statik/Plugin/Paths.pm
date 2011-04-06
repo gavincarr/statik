@@ -13,21 +13,26 @@ use parent qw(Statik::Plugin);
 
 # -------------------------------------------------------------------------
 
-# Convert the set up updated post paths to the full set of updated relative
-# paths for which new pages should be generated
+# Convert the set of updated posts to a hashref whose keys are the set of
+# relative paths for which we need to generate updated pages, and whose
+# values are an arrayref holding the ordered list of fully-qualified post
+# paths included within the given key.
 sub paths {
   my ($self, %arg) = @_;
 
   # Check arguments
+  my $entries_list = $arg{entries_list}
+    or die "Required argument 'entries_list' missing";
   my $updates = $arg{updates} 
     or die "Required argument 'updates' missing";
 
   my @updates = sort keys %$updates or return;
-  printf "+ Generating page_paths for %d updated posts\n", scalar @updates
-    if $self->options->{verbose};
+  printf "+ Generating paths and posts sets for %d updated posts\n",
+    scalar @updates
+      if $self->options->{verbose};
 
+  # Collect constituent path segments from updated paths
   my @paths = ( '' );
-
   my %done = ( '' => 1 );
   for my $path (@updates) {
     my $current_path = '';
@@ -40,7 +45,19 @@ sub paths {
     }
   }
 
-  return @paths;
+  # Map paths to entries_list subsets
+  my $post_dir = $self->config->{post_dir};
+  my %paths = ();
+  for my $path (@paths) {
+    if ($path eq '') {
+      $paths{$path} = [ @$entries_list ];
+    }
+    else {
+      $paths{$path} = [ grep m{^$post_dir/$path\b}, @$entries_list ];
+    }
+  }
+
+  return wantarray ? %paths : \%paths;
 }
 
 1;
@@ -48,8 +65,8 @@ sub paths {
 =head1 NAME
 
 Statik::Plugin::Paths - statik plugin that takes the set of updated posts
-and generates the set of relative paths for which we need to generate updated
-pages
+and generates a hashref mapping relative path segments to fully qualified
+post paths
 
 =head1 SYNOPSIS
 
@@ -58,21 +75,20 @@ No configuration items.
 =head1 DESCRIPTION
 
 Statik::Plugin::Paths is a statik plugin that takes the set of updated posts
-and generates the set of relative paths for which we need to generate updated
-pages e.g. if one post has been updated - /foo/bar/text.txt - then this plugin
-will return the following set of update paths:
+and generates a hashref whose keys are the set of relative paths for
+which we need to generate updated pages, and whose values are an
+arrayref holding the ordered list of fully-qualified post paths included
+within the given key.
 
-=over 4
+For example, if one post has been updated - /foo/bar/post.txt - then the
+following hashref would be returned:
 
-=item '' - representing the root path
-
-=item /foo
-
-=item /foo/bar
-
-=item /foo/bar/test.txt
-
-=back
+    {
+        '':                 [ '/path/to/post/dir/foo/bar/post.txt' ],
+        'foo':              [ '/path/to/post/dir/foo/bar/post.txt' ],
+        'foo/bar':          [ '/path/to/post/dir/foo/bar/post.txt' ],
+        'foo/bar/post.txt': [ '/path/to/post/dir/foo/bar/post.txt' ],
+    }
 
 =head1 AUTHOR
 

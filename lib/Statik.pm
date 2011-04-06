@@ -58,18 +58,24 @@ sub generate {
     scalar keys %$entries, scalar keys %$updates 
       if $self->{options}->{verbose};
 
+  # Hook: filter
+  $plugins->call_all('filter', entries => $entries, updates => $updates);
+
   # Hook: sort
   # TODO: hookify
   my $sort_sub = sub {
     my ($entries) = @_;
     return sort { $entries->{$b} <=> $entries->{$a} } keys %$entries;
   };
-  my @files = $sort_sub->( $entries );
+  my @entries_list = $sort_sub->( $entries );
 
   # Hook: paginate
-  my @page_paths = ();
-  $plugins->call_all('paginate', entries => $entries, updates => $updates, page_paths => \@page_paths);
-  print $self->{json}->encode(\@page_paths) if $self->{options}->{verbose};
+  my %generate_paths = $plugins->call_all('paths',
+    entries_list => \@entries_list,
+    entries_map => $entries,
+    updates => $updates,
+  );
+  print $self->{json}->encode(\%generate_paths) if $self->{options}->{verbose};
 
   # Generate static pages
   my $gen = Statik::Generator->new(
@@ -77,8 +83,8 @@ sub generate {
     options         => $options,
     plugins         => $plugins,
     entries_map     => $entries,
-    entries_list    => \@files,
-    page_paths      => \@page_paths,
+    entries_list    => \@entries_list,
+    generate_paths  => \%generate_paths,
   );
   $gen->generate;
 
