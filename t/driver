@@ -18,6 +18,8 @@ die "Missing test_dir '$test_dir'\n" unless -d $test_dir;
 
 my $s;
 
+$ENV{TZ} = 'UTC';
+
 # Setup
 remove(\1, "$test_dir/static/*");
 check_timestamps("$test_dir/posts");
