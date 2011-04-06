@@ -1,9 +1,9 @@
-# Name: Statik::Plugin::Paginate
+# Name: Statik::Plugin::Paths;
 # Author(s): Gavin Carr <gavin@openfusion.com.au>
 # Version: 0.001
-# Documentation: see bottom of file or type 'perldoc Statik::Plugin::Paginate'
+# Documentation: see bottom of file or type 'perldoc Statik::Plugin::Paths'
 
-package Statik::Plugin::Paginate;
+package Statik::Plugin::Paths;
 
 use strict;
 use parent qw(Statik::Plugin);
@@ -13,20 +13,20 @@ use parent qw(Statik::Plugin);
 
 # -------------------------------------------------------------------------
 
-sub paginate {
+# Convert the set up updated post paths to the full set of updated relative
+# paths for which new pages should be generated
+sub paths {
   my ($self, %arg) = @_;
 
   # Check arguments
   my $updates = $arg{updates} 
     or die "Required argument 'updates' missing";
-  my $page_paths = $arg{page_paths} 
-    or die "Required argument 'page_paths' missing";
 
   my @updates = sort keys %$updates or return;
   printf "+ Generating page_paths for %d updated posts\n", scalar @updates
     if $self->options->{verbose};
 
-  push @$page_paths, '';
+  my @paths = ( '' );
 
   my %done = ( '' => 1 );
   for my $path (@updates) {
@@ -36,30 +36,43 @@ sub paginate {
       $current_path .= '/' if $current_path;
       $current_path .= $path_elt;
       next if $done{$current_path}++;
-      push @$page_paths, $current_path;
+      push @paths, $current_path;
     }
   }
+
+  return @paths;
 }
 
 1;
 
 =head1 NAME
 
-Statik::Plugin::Paginate - statik plugin that ...
+Statik::Plugin::Paths - statik plugin that takes the set of updated posts
+and generates the set of relative paths for which we need to generate updated
+pages
 
 =head1 SYNOPSIS
 
-To configure, add a section like the following to your statik.conf file
-(defaults shown):
-
-    [Statik::Plugin::Paginate]
-    # What name should I use?
-    name = value
-
+No configuration items.
 
 =head1 DESCRIPTION
 
-Statik::Plugin::Paginate is a statik plugin that ...
+Statik::Plugin::Paths is a statik plugin that takes the set of updated posts
+and generates the set of relative paths for which we need to generate updated
+pages e.g. if one post has been updated - /foo/bar/text.txt - then this plugin
+will return the following set of update paths:
+
+=over 4
+
+=item '' - representing the root path
+
+=item /foo
+
+=item /foo/bar
+
+=item /foo/bar/test.txt
+
+=back
 
 =head1 AUTHOR
 

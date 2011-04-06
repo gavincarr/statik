@@ -5,7 +5,7 @@ use Carp;
 
 my @DEFAULT_PLUGIN_LIST = qw(
   Statik::Plugin::Entries
-  Statik::Plugin::Paginate
+  Statik::Plugin::Paths
   Statik::Plugin::Theme
 );
 

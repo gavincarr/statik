@@ -16,7 +16,7 @@ sub new {
   my $self = bless {}, ref $class || $class;
 
   # Check required arguments
-  for (qw(config options plugins entries_map entries_list page_paths)) {
+  for (qw(config options plugins entries_map entries_list generate_paths)) {
     $self->{$_} = delete $arg{$_} 
       or croak "Required argument '$_' missing";
   }
@@ -43,7 +43,7 @@ sub new {
 sub generate {
   my $self = shift;
 
-  for my $path (@{ $self->{page_paths} }) {
+  for my $path (@{ $self->{generate_paths} }) {
     if (-f File::Spec->catfile($self->{config}->{post_dir}, $path)) {
       $self->generate_post_pages(path_filename => $path);
     }
@@ -118,7 +118,6 @@ sub generate_index_pages {
       unless defined $max_pages && $max_pages ne '';
 
     # Group post files into N sets of $posts_per_page posts
-    # (we do this in two passes to calculate page_total before we render)
     my (@page_files, @page_sets);
     my $page_num = 1;
     my $output;
