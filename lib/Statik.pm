@@ -79,7 +79,8 @@ sub generate {
     entries_map => $entries,
     updates => $updates,
   );
-  print $self->{json}->encode(\%generate_paths) if $self->{options}->{verbose};
+  print $self->{json}->encode(\%generate_paths)
+    if $self->{options}->{verbose} >= 2 and keys %generate_paths;
 
   # Generate static pages
   my $gen = Statik::Generator->new(
