@@ -6,6 +6,7 @@ use Clone qw(clone);
 use File::Copy qw(move);
 use File::stat;
 use File::Basename;
+use File::Path qw(make_path);
 use Time::Piece;
 
 use Statik::Stash;
@@ -308,7 +309,12 @@ sub _output {
     print "+ outputting $fullpath\n";
     return;
   }
+  
+  # Check required directories exist
+  my $dir = dirname $fullpath;
+  -d $dir or make_path($dir, { mode => 0755 });
 
+  # Write tmp output file
   open my $fh, '>', "$fullpath.tmp"
     or die "Cannot open output file '$fullpath.tmp': $!";
   binmode $fh, ":encoding($self->{config}->{blog_encoding})";
@@ -317,6 +323,7 @@ sub _output {
   close $fh
     or die "Close on '$fullpath' failed: $!";
 
+  # Rename tmp output file to real one
   move "$fullpath.tmp", $fullpath
     or die "Renaming $fullpath.tmp -> $fullpath failed: $!";
 }
