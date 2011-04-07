@@ -32,9 +32,11 @@ sub paths {
       if $self->options->{verbose};
 
   # Collect constituent path segments from updated paths
+  my $post_dir = $self->config->{post_dir};
   my @paths = ( '' );
   my %done = ( '' => 1 );
   for my $path (@updates) {
+    $path =~ s{^ $post_dir / }{}x;
     my $current_path = '';
     my @path_elt = split m!/!, $path;
     while (my $path_elt = shift @path_elt) {
@@ -46,7 +48,6 @@ sub paths {
   }
 
   # Map paths to entries_list subsets
-  my $post_dir = $self->config->{post_dir};
   my %paths = ();
   for my $path (@paths) {
     if ($path eq '') {

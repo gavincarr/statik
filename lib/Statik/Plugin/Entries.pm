@@ -150,7 +150,7 @@ sub entries {
             or ! -f $index_file
             or stat($index_file)->mtime < $mtime) {
           # debug(3, "index_file $index_file out of date") unless $self->options->{force};
-          $updates->{$path_filename_ext} = 1;
+          $updates->{$File::Find::name} = 1;
           $max_mtime = $mtime if $mtime > $max_mtime;
         }
       }
