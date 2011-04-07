@@ -22,13 +22,12 @@ my ($opt, $usage) = describe_options(
 print($usage->text), exit if $opt->help;
 print($usage->text), exit if @ARGV;
 
-my $s = Statik->new(
+Statik->new(
   config    => $opt->config,
   force     => $opt->force,
   noop      => $opt->noop,
   verbose   => $opt->verbose || 0,
-);
-$s->generate;
+)->generate;
 
 __END__
 
