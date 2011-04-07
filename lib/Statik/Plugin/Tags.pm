@@ -33,9 +33,9 @@ sub defaults {
 sub start {
   my $self = shift;
 
-  # Load tag cache
+  # Load tag cache (except in 'force' mode)
   my $fn = File::Spec->catfile($self->config->{state_dir}, $self->{tag_cache_file});
-  if (-f $fn) {
+  if (-f $fn and ! $self->options->{force}) {
     open my $fh, '<', $fn 
       or die "Cannot open tag cache '$fn' for reading: $!\n";
     local $/ = undef;
