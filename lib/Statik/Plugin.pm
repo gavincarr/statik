@@ -3,7 +3,7 @@
 package Statik::Plugin;
 
 use strict;
-use Carp;
+use JSON;
 use Hash::Merge qw(merge);
 
 sub new {
@@ -12,14 +12,15 @@ sub new {
 
   # Check arguments
   $self->{_config} = delete $arg{config}
-    or croak "Required argument 'config' missing";
+    or die "Required argument 'config' missing";
   $self->{_options} = delete $arg{options}
-    or croak "Required argument 'options' missing";
+    or die "Required argument 'options' missing";
   $self->{_posts} = delete $arg{posts}
-    or croak "Required argument 'posts' missing";
-  croak "Invalid arguments: " . join(',', sort keys %arg) if %arg;
+    or die "Required argument 'posts' missing";
+  die "Invalid arguments: " . join(',', sort keys %arg) if %arg;
 
   # Initialise
+  $self->{_json} = JSON->new->utf8->allow_blessed->convert_blessed->pretty;
   $self->{name} = ref $self;
   my $plugin_config = merge( $self->{_config}->{_config}->{$self->{name}}||{}, 
                              $self->defaults );
@@ -53,6 +54,11 @@ sub options {
 sub posts {
   my $self = shift;
   return $self->{_posts};
+}
+
+sub json {
+  my $self = shift;
+  return $self->{_json};
 }
 
 1;
@@ -116,6 +122,20 @@ in the main statik.conf config file.
 Returns a hashref containing any runtime options in force for this statik
 run. The options which may currently be defined here include 'verbose',
 'noop', and 'force'.
+
+=item posts()
+
+Returns a Statik::Posts object which can be used to fetch and parse
+individual posts e.g.
+
+    my $post = $self->posts->fetch( $post_fullpath );
+
+=item json()
+
+Returns a JSON object which can be used for serialising data structures
+to json e.g.
+
+    print $self->json->encode $data;
 
 =back
 

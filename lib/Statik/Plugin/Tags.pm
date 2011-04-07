@@ -7,7 +7,6 @@ package Statik::Plugin::Tags;
 
 use strict;
 use parent qw(Statik::Plugin);
-use JSON;
 use File::Copy qw(move);
 
 # Uncomment next line to enable ### line debug output
@@ -38,7 +37,7 @@ sub start {
       or die "Cannot open tag cache '$fn' for reading: $!\n";
     local $/ = undef;
     my $cache_data = <$fh>;
-    $self->{cache} = decode_json $cache_data if $cache_data;
+    $self->{cache} = $self->json->decode($cache_data) if $cache_data;
   }
 
   $self->{cache} ||= {
@@ -111,7 +110,7 @@ sub end {
   my $fn2 = File::Spec->catfile($self->config->{state_dir}, $self->{tag_cache_file});
   open my $fh, '>', $fn1
     or die "Cannot open tag cache '$fn1' for writing: $!\n";
-  print $fh encode_json($self->{cache})
+  print $fh $self->json->encode($self->{cache})
     or die "Cannot write to tag cache '$fn1': $!\n";
   close $fh
     or die "Cannot close tag cache '$fn1': $!\n";

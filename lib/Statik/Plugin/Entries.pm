@@ -13,7 +13,6 @@ use File::Find;
 use File::Copy qw(move);
 use Time::Local;
 use Time::Piece;
-use JSON;
 
 # Uncomment next line to enable debug output (don't uncomment debug() lines)
 #use Blosxom::Debug debug_level => 2;
@@ -57,7 +56,7 @@ sub entries {
   # Read entries_index data
   if ($self->{index_file} && -f $self->{index_file}) {
     if (open my $fh, $self->{index_file})  {
-      my $index_data = eval { local $/ = undef; decode_json <$fh> };
+      my $index_data = eval { local $/ = undef; $self->json->decode(<$fh>) };
       if ($@) {
         warn "[entries_default] loading entries index '$self->{entries_index}' failed: $@\n";
       }
@@ -214,7 +213,7 @@ sub end {
   if ($self->{updates_flag} && $self->{index_file}) {
     # debug(1, "$self->{updates_flag} update(s), saving data to $self->{entries_index}");
     if (open my $index, '>', "$self->{index_file}.tmp") {
-      print $index to_json({ 
+      print $index $self->json->encode({ 
         files => $self->{files},
         symlinks => $self->{symlinks},
         max_mtime => $self->{max_mtime},
