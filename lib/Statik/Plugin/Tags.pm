@@ -8,6 +8,7 @@ package Statik::Plugin::Tags;
 use strict;
 use parent qw(Statik::Plugin);
 use File::Copy qw(move);
+use List::MoreUtils qw(uniq);
 
 # Uncomment next line to enable ### line debug output
 #use Smart::Comments
@@ -78,22 +79,57 @@ sub paths {
     my $post = $posts->fetch(path => $path);
     my $tag_header = $post->header($self->{tag_header}) or next;
     my $new_post = not exists $cache->{entries_map}->{$path};
-    my @old_tags = split /\s*,\s*/, $cache->{entries_map}->{$path}->{tags} if ! $new_post;
-    $cache->{entries_map}->{$path} = { mtime => $updates->{$path}, tags => $tag_header };
-    for my $tag (split /\s*,\s*/, $tag_header) {
-      $tags{$tag}++;
+    my @old_tags = sort uniq split /\s*,\s*/, $cache->{entries_map}->{$path}->{tags} if ! $new_post;
+    my @new_tags = sort uniq split /\s*,\s*/, $tag_header;
+    next unless @new_tags or @old_tags;
 
-      if ($new_post) {
+    $cache->{entries_map}->{$path} = { mtime => $updates->{$path}, tags => $tag_header };
+    if ($new_post) {
+      printf "+ %s not in tag cache, adding %d tags\n", $path, scalar @new_tags
+        if $self->options->{verbose};
+      for my $tag (@new_tags) {
+        $tags{$tag}++;
         $cache->{tag_map}->{$tag} ||= {};
         $cache->{tag_map}->{$tag}->{$path} = 1;
         $cache->{tag_counts}->{$tag}++;
       }
-      else {
-        # TODO: if not a new post, we should diff the tag sets and sync any changes
+    }
+    else {
+      # If not a new post, we need to diff the tag sets and sync any changes
+      my @deleted;
+      my %new_tags = map { $_ => 1 } @new_tags;
+      for my $tag (@old_tags) {
+        delete $new_tags{$tag}, next if $new_tags{$tag};
+        # If $tag is in @old_tags, but not @new_tags, add to @deleted set
+        push @deleted, $tag;
+      }
+      # Any tags left in %new_tags are new, add to @added set
+      my @added = sort keys %new_tags;
+
+      # Add and remove added/deleted tags from cache
+      if (@added or @deleted) {
+        for my $tag (@deleted) {
+          $tags{$tag}++;
+          print "+ '$tag' tag deleted from $path - removing from tag cache\n"
+            if $self->options->{verbose};
+          delete $cache->{tag_map}->{$tag}->{$path};
+          delete $cache->{tag_map}->{$tag} unless keys %{$cache->{tag_map}->{$tag}};
+          $cache->{tag_counts}->{$tag}--;
+          delete $cache->{tag_counts}->{$tag} if $cache->{tag_counts}->{$tag} == 0;
+        }
+        for my $tag (@added) {
+          $tags{$tag}++;
+          print "+ '$tag' tag added to $path - adding to tag cache\n"
+            if $self->options->{verbose};
+          $cache->{tag_map}->{$tag} ||= {};
+          $cache->{tag_map}->{$tag}->{$path} = 1;
+          $cache->{tag_counts}->{$tag}++;
+        }
       }
     }
   }
-  printf "Tags affected by updates: %s\n", join(',', sort keys %tags);
+  printf "+ Tags affected by updates: %s\n", join(',', sort keys %tags) || '(none)'
+    if $self->options->{verbose};
 
   # Map paths to entries_list subsets
   my %paths = ();
@@ -133,7 +169,7 @@ To configure, add a section like the following to your statik.conf file
 
     [Statik::Plugin::Tags]
     # Directory (in static_dir) to use as root for our tag indexes
-    tag_root = 'tag'
+    tag_root = tag
     # Header in which to look for our comma-separated list of tags
     tag_header = Tags
     # Filename in which to store cached tag collection (in state_dir)
