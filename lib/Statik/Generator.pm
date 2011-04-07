@@ -100,8 +100,12 @@ sub generate_index_pages {
     or die "Required argument 'posts' missing";
   ref $posts and ref $posts eq 'ARRAY'
     or die "Invalid 'posts' argument '$posts' - not an arrayref";
-  @$posts
-    or die "Invalid 'posts' argument - empty arrayref";
+
+  # If @$posts == 0, we should delete all existing index pages
+  if (@$posts == 0) {
+    $self->_remove_all_index_pages(path => $path);
+    return;
+  }
 
   my $config = $self->{config};
   mkdir "$config->{static_dir}/$path", 0755
@@ -168,6 +172,30 @@ sub generate_index_pages {
       @page_files = ();
       $page_num++;
     }
+  }
+}
+
+sub _remove_all_index_pages {
+  my ($self, %arg) = @_;
+
+  # Check arguments
+  my $path = delete $arg{path} 
+    or die "Required argument 'path' missing";
+
+  # Remove all index pages in $path
+  my $config = $self->{config};
+  for my $flavour (@{$config->{index_flavours}}) {
+    my $fconfig = $config->flavour($flavour);
+    my $suffix = $fconfig->{suffix} || $flavour;
+    for (glob "$config->{static_dir}/$path/index*.$suffix") {
+      print "+ removing obsolete $_\n" if $self->{options}->{verbose};
+      unlink $_;
+    }
+  }
+
+  # Remove directory if empty
+  if (! glob "$config->{static_dir}/$path/*") {
+    rmdir "$config->{static_dir}/$path";
   }
 }
 
