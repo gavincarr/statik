@@ -12,7 +12,8 @@ $|++;
 
 my ($opt, $usage) = describe_options(
   '%c %o',
-  [ 'config|c=s'    => '<config_file> - statik config file' ],
+  [ 'config|c=s'    => '<config_file> - statik config file (default: config/statik.conf)',
+                        { default => 'config/statik.conf' } ],
   [ 'force|f'       => 'force all entries to be regenerated' ],
   [ 'noop|n'        => "don't do updates, just show what would be done", 
                        { implies => { verbose => 1 } } ],
