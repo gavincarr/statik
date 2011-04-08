@@ -146,6 +146,8 @@ sub _map_booleans {
 sub _clean_flavours {
   my $self = shift;
 
+  my $max_posts = $self->{posts_per_page} * $self->{max_pages};
+
   for my $key (keys %{$self->{_config}}) {
     next unless $key =~ m/^flavour:(\w+)/;
     my $flavour = $1;
@@ -159,8 +161,15 @@ sub _clean_flavours {
       $fconfig->{$_} = 0, next if $fconfig->{$_} =~ m/^(no|off)/;
     }
 
+    if ($fconfig->{posts_per_page} and $fconfig->{max_posts} and
+        $fconfig->{posts_per_page} * $fconfig->{max_posts} > $max_posts) {
+      $max_posts = $fconfig->{posts_per_page} * $fconfig->{max_posts};
+    }
+
     $self->{_config}->{$key} = $fconfig;
   }
+
+  $self->{max_posts} = $max_posts;
 }
 
 # Return non-private keys
