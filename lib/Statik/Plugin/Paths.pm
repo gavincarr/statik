@@ -35,6 +35,7 @@ sub paths {
   my $post_dir = $self->config->{post_dir};
   my $rendering_posts = @{$self->config->{post_flavours}};
   my @paths = ( '' );
+  my %paths = ();
   my %done = ( '' => 1 );
   for my $path (@updates) {
     $path =~ s{^ $post_dir / }{}x;
@@ -45,20 +46,24 @@ sub paths {
       $current_path .= $path_elt;
       next if $done{$current_path}++;
       # Add $current_path to paths if index, or we're rendering posts
-      push @paths, $current_path
-        if $rendering_posts or @path_elt;
+      if (@path_elt) {
+        push @paths, $current_path;
+      }
+      elsif ($rendering_posts) {
+        push @paths, $current_path;
+        $paths{$current_path} = $current_path;
+      }
     }
   }
 
   # Map paths to entries_list subsets
   printf "+ Mapping %d paths to entries list subsets\n", scalar @paths
     if $self->options->{verbose};
-  my %paths = ();
   for my $path (@paths) {
     if ($path eq '') {
       $paths{$path} = [ @$entries_list ];
     }
-    else {
+    elsif (! $paths{$path}) {
       $paths{$path} = [ grep m{^$post_dir/$path\b}, @$entries_list ];
     }
   }
