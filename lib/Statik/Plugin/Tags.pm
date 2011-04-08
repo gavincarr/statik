@@ -72,6 +72,7 @@ sub paths {
 
   # Update tag sets for all updated posts
   my $cache = $self->{cache};
+  my $config = $self->config;
   my $posts = $self->posts;
   my %tags = ();
   for my $path (@updates) {
@@ -82,10 +83,12 @@ sub paths {
     my @old_tags = sort uniq split /\s*,\s*/, $cache->{entries_map}->{$path}->{tags} if ! $new_post;
     my @new_tags = sort uniq split /\s*,\s*/, $tag_header;
     next unless @new_tags or @old_tags;
+    (my $rel_path = $path) =~ s!^ $config->{post_dir} /!!x
+      if $self->options->{verbose};
 
     $cache->{entries_map}->{$path} = { mtime => $updates->{$path}, tags => $tag_header };
     if ($new_post) {
-      printf "+ %s not in tag cache, adding %d tags\n", $path, scalar @new_tags
+      printf "+ %s not in tag cache, adding %d tags\n", $rel_path, scalar @new_tags
         if $self->options->{verbose};
       for my $tag (@new_tags) {
         $tags{$tag}++;
@@ -110,7 +113,7 @@ sub paths {
       if (@added or @deleted) {
         for my $tag (@deleted) {
           $tags{$tag}++;
-          print "+ '$tag' tag deleted from $path - removing from tag cache\n"
+          print "+ '$tag' tag deleted from $rel_path - removing from tag cache\n"
             if $self->options->{verbose};
           delete $cache->{tag_map}->{$tag}->{$path};
           delete $cache->{tag_map}->{$tag} unless keys %{$cache->{tag_map}->{$tag}};
@@ -119,7 +122,7 @@ sub paths {
         }
         for my $tag (@added) {
           $tags{$tag}++;
-          print "+ '$tag' tag added to $path - adding to tag cache\n"
+          print "+ '$tag' tag added to $rel_path - adding to tag cache\n"
             if $self->options->{verbose};
           $cache->{tag_map}->{$tag} ||= {};
           $cache->{tag_map}->{$tag}->{$path} = 1;
