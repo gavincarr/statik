@@ -75,7 +75,7 @@ sub generate_post_pages {
     my $output_fullpath = "$config->{static_dir}/$path_filename";
     $output_fullpath =~ s/\.$config->{file_extension}$/.$suffix/;
 
-    print "+ generating $flavour post page for '$path_filename'\n"
+    print "+ Generating $flavour post page for '$path_filename'\n"
       if $self->{options}->{verbose};
     my $output = $self->_generate_page(
       flavour => $flavour,
@@ -151,7 +151,7 @@ sub generate_index_pages {
     my $page_total = @page_sets;
     $page_num = 1;
     for my $page_files (@page_sets) {
-      printf "+ generating %s index page %d/%d for '%s' (entries = %d)\n",
+      printf "+ Generating %s index page %d/%d for '%s' (entries = %d)\n",
         $flavour, $page_num, $page_total, $path || '/', scalar @$page_files
           if $self->{options}->{verbose};
       $output = $self->_generate_page(
@@ -188,7 +188,7 @@ sub _remove_all_index_pages {
     my $fconfig = $config->flavour($flavour);
     my $suffix = $fconfig->{suffix} || $flavour;
     for (glob "$config->{static_dir}/$path/index*.$suffix") {
-      print "+ removing obsolete $_\n" if $self->{options}->{verbose};
+      print "+ Removing obsolete $_\n" if $self->{options}->{verbose};
       unlink $_;
     }
   }
@@ -334,7 +334,7 @@ sub _output {
   );
   
   if ($self->{options}->{noop}) {
-    print "+ outputting $fullpath\n";
+    print "+ Creating output for $fullpath\n";
     return;
   }
   
