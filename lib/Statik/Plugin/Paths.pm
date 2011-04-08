@@ -59,12 +59,20 @@ sub paths {
   # Map paths to entries_list subsets
   printf "+ Mapping %d paths to entries list subsets\n", scalar @paths
     if $self->options->{verbose};
+  my $max_posts = $self->config->{max_posts};
   for my $path (@paths) {
     if ($path eq '') {
       $paths{$path} = [ @$entries_list ];
     }
     elsif (! $paths{$path}) {
-      $paths{$path} = [ grep m{^$post_dir/$path\b}, @$entries_list ];
+      $paths{$path} = [];
+      my $count = 0;
+      for (@$entries_list) {
+        if (m{^$post_dir/$path\b}) {
+          push @{$paths{$path}}, $_;
+          last if ++$count >= $max_posts;
+        }
+      }
     }
   }
   print "+ Path mapping complete\n"

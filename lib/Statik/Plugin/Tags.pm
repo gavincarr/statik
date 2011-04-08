@@ -136,8 +136,16 @@ sub paths {
 
   # Map paths to entries_list subsets
   my %paths = ();
+  my $max_posts = $self->config->{max_posts};
   for my $tag (sort keys %tags) {
-    $paths{"$self->{tag_root}/$tag"} = [ grep { $cache->{tag_map}->{$tag}->{$_} } @$entries_list ];
+    $paths{"$self->{tag_root}/$tag"} = [];
+    my $count = 0;
+    for (@$entries_list) {
+      if ($cache->{tag_map}->{$tag}->{$_}) {
+        push @{$paths{"$self->{tag_root}/$tag"}}, $_;
+        last if ++$count >= $max_posts;
+      }
+    }
   }
 
   return %paths;
