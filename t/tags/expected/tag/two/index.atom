@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>My Bløg</title> 
+  <subtitle>Mutterings from the &lt;dungeon&gt;</subtitle> 
+  <link href="http://example.com/testblog/tag/two/"/>
+  <updated>2011-01-04T14:15:16+0000</updated>
+  <author>
+    <name>Jane Author</name>
+  </author> 
+  <id>tag:example.com,2010:/testblog/tag/two/</id>
+  <generator uri="https://github.com/gavincarr/statik" version="0.1">Statik</generator>
+  <entry>
+    <title>Post the fourth</title>
+    <link href="http://example.com/testblog/fourth"/>
+    <id>tag:example.com,2011-01-04:/testblog/fourth</id>
+    <updated>2011-01-04T14:15:16+0000</updated>
+  </entry>
+</feed>
