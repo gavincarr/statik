@@ -244,6 +244,12 @@ A string holding the current post body (xml-escaped as usual, if the xml-escape
 flag is set for the current flavour. body_unesc also exists as usual, if you
 want the raw unescaped version).
 
+=item date_break
+
+Boolean flag (0/1) indicating whether this is the first post on a new date i.e.
+the current date has changed, and a date template may have generated new date
+output.
+
 =back
 
 

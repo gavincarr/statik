@@ -2,7 +2,6 @@ package Statik::Generator;
 
 use strict;
 use Carp;
-use Clone qw(clone);
 use File::Copy qw(move);
 use File::stat;
 use File::Basename;
@@ -240,16 +239,17 @@ sub _generate_page {
   # Posts
   my $current_date = '';
   for (my $i = 0; $i <= $#$post_fullpaths; $i++) {
-    my ($date_output, $post_output) = $self->_generate_post(
+    my ($date_output, $post_output);
+    ($date_output, $post_output, $current_date) = $self->_generate_post(
       post_fullpath => $post_fullpaths->[$i],
       flavour       => $flavour,
       theme         => $theme,
       stash         => $stash,
+      current_date  => $current_date,
     );
-    my $post_date = $stash->{post_created_date};
-    $output .= $date_output if $post_date && $post_date ne $current_date;
+
+    $output .= $date_output if defined $date_output;
     $output .= $post_output;
-    $current_date = $post_date;
   }
 
   # Foot hook
@@ -262,7 +262,7 @@ sub _generate_page {
 
 # Generate/render the flavour/themed output for a post.
 # Called once per post per theme/flavour.
-# Returns a two-element list: ($date_output, $post_output).
+# Returns a three-element list: ($date_output, $post_output, $current_date).
 sub _generate_post {
   my ($self, %arg) = @_;
 
@@ -275,6 +275,8 @@ sub _generate_post {
     or die "Required argument 'theme' missing";
   my $stash = delete $arg{stash}
     or die "Required argument 'stash' missing";
+  my $current_date = delete $arg{current_date};
+  die "Required argument 'current_date' missing" unless defined $current_date;
   die "Invalid arguments: " . join(',', sort keys %arg) if %arg;
 
   my $template_sub = $self->{template_sub};
@@ -307,16 +309,23 @@ sub _generate_post {
   $stash->set(body          => $post->body);
 
   # Date hook
-  my $date_tmpl = $template_sub->( chunk => 'date', flavour => $flavour, theme => $theme );
-  $self->{plugins}->call_all( 'date', template => \$date_tmpl, stash => $stash );
-  my $date_output = $self->{interpolate_sub}->( template => $date_tmpl, stash => $stash );
+  my $date_output;
+  if ($stash->{post_created_date} ne $current_date) {
+    my $date_tmpl = $template_sub->( chunk => 'date', flavour => $flavour, theme => $theme );
+    $self->{plugins}->call_all( 'date', template => \$date_tmpl, stash => $stash );
+    $date_output = $self->{interpolate_sub}->( template => $date_tmpl, stash => $stash );
+    $stash->set(date_break => 1);
+  }
+  else {
+    $stash->set(date_break => 0);
+  }
 
   # Post hook
   my $post_tmpl = $template_sub->( chunk => 'post', flavour => $flavour, theme => $theme );
   $self->{plugins}->call_all( 'post', template => \$post_tmpl, stash => $stash );
   my $post_output = $self->{interpolate_sub}->( template => $post_tmpl, stash => $stash );
 
-  return ($date_output, $post_output);
+  return ($date_output, $post_output, $stash->{post_created_date});
 }
 
 sub _output {
