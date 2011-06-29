@@ -60,17 +60,18 @@ sub _munge_template {
   my ($self, %arg) = @_;
   my $template_ref = $arg{template};
   my $hook = $arg{hook} || '[unknown]';
-  my %stash = %{$arg{stash}};
+  # TODO: should we clone this here, to avoid pollution, or do we want the continuity?
+  my $stash = $arg{stash};
 
-  # Add our define_variables list to %stash
+  # Add our define_variables list to stash
   for my $var (split /\s*,\s*/, $self->{define_variables}) {
-    $stash{$var} = '' if not defined $stash{$var};
+    $stash->{$var} = '' if not defined $stash->{$var};
   }
 
   # Compile an arg list for Text::MicroMason. We could use -PassVariables
-  # instead, but that only passes scalars, not e.g. \%stash as a hashref
+  # instead, but that only passes scalars, not e.g. $stash as a hashref
   my $args_section = "<%args>\n";
-  $args_section .= "\$$_\n" foreach sort keys %stash;
+  $args_section .= "\$$_\n" foreach sort keys %$stash;
   $args_section .= "\$stash\n";
   $args_section .= "</%args>\n";
 
@@ -79,8 +80,8 @@ sub _munge_template {
     $self->{mason}->execute(
       text => "$args_section$$template_ref",
       {},
-      %stash,
-      stash => \%stash,
+      %$stash,
+      stash => $stash,
     ); 
   };
   if ($@) {
