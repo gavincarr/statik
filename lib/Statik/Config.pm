@@ -112,17 +112,16 @@ sub _qualify_paths {
   # Default base_dir to parent directory of config file dir
   $self->{base_dir} ||= realpath(File::Spec->catdir( dirname( $self->{_file} ), File::Spec->updir ));
 
-  for ($self->keys) {
-    next unless m/_(dir|list|path)$/;
-    next if $_ eq 'base_dir';
+  for my $key ($self->keys) {
+    next unless $key =~ m/_(dir|list|path)$/;
+    next if $key eq 'base_dir';
 
-    if (ref $self->{$_}) {
-      $self->{$_} = File::Spec->rel2abs( $self->{$_}, $self->{base_dir} )
-        foreach @{$self->{$_}};
+    if (ref $self->{$key}) {
+      $_ = File::Spec->rel2abs( $_, $self->{base_dir} ) foreach @{$self->{$key}};
     }
 
     else {
-      $self->{$_} = File::Spec->rel2abs( $self->{$_}, $self->{base_dir} );
+      $self->{$key} = File::Spec->rel2abs( $self->{$key}, $self->{base_dir} );
     }
   }
 
