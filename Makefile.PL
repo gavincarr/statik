@@ -9,6 +9,7 @@ license         'perl';
 
 build_requires  'Test::More' => 0.88;
 build_requires  'Test::Differences';
+build_requires  'Test::Files';
 
 requires        'parent';
 requires        'Config::Tiny';
