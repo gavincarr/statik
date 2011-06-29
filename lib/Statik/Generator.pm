@@ -305,6 +305,7 @@ sub _generate_post {
   $stash->set_as_date(post_updated  => stat($post_fullpath)->mtime);
 
   # post_headers are lowercased and mapped into header_xxx fields
+  $stash->delete_all(qr/^header_/);
   $stash->set("header_\L$_" => $post->headers->{$_}) foreach keys %{$post->{headers}};
   $stash->set(body          => $post->body);
 

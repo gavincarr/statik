@@ -114,6 +114,21 @@ sub set_as_date {
   }
 }
 
+# Delete $key from stash
+sub delete {
+  my ($self, $key) = @_;
+  delete $self->{$key};
+}
+
+# Delete all keys matching $pattern from stash
+sub delete_all {
+  my ($self, $pattern) = @_;
+  for (keys %$self) {
+    delete $self->{$_} if m/$pattern/;
+  }
+  return $self;
+}
+
 1;
 
 =head1 NAME
@@ -128,8 +143,14 @@ Statik::Stash - stash class used for passing statik variables through to templat
   $stash->set(myplugin_topic => 'Hello World!');
 
   # The set_as_date() method also exists, which expects an epoch seconds
-  # or Time::Piece value, and adds an additional set of derived variables:
-  $stash->set_as_date(myplugin_naptime => localtime);
+  # or Time::Piece value, and adds an additional set of derived variables.
+  # The following adds 'foo_started', 'foo_started_date', 'foo_started_time',
+  # and many more. See L<set_as_date()> below for details.
+  $stash->set_as_date(foo_started => localtime);
+
+  # Keys can also be deleted individually, or as a group:
+  $stash->delete($key);
+  $stash->delete_all(qr/^myplugin_/);
 
 
   # Statik templates can then reference those variables directly using
@@ -331,6 +352,16 @@ The datetime in epoch seconds.
 =item get(variable)
 
 get is a trivial getter, included for completeness.
+
+=item delete(key)
+
+Delete the given key from stash.
+
+=item delete_all(pattern)
+
+Delete all keys matching the given pattern from the stash e.g.
+
+  $stash->delete_all(qr/^myplugin_/);
 
 =back
 
