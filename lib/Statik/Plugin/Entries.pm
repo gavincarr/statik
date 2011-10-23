@@ -217,9 +217,6 @@ sub end {
         files => $self->{files},
         symlinks => $self->{symlinks},
         max_mtime => $self->{max_mtime},
-      }, { 
-        utf8 => 1,
-        pretty => 1
       }) and
       close $index and
       move("$self->{index_file}.tmp", $self->{index_file});
