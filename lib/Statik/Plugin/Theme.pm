@@ -47,9 +47,9 @@ sub template {
     my %args = @_;
 
     my $chunk = $args{chunk} ||
-      die "Missing 'chunk' argument to Theme::template";
+      die "[Plugin::Theme] missing 'chunk' argument to template()";
     my $flavour = $args{flavour} || 
-      die "Missing 'flavour' argument to Theme::template";
+      die "[Plugin::Theme] missing 'flavour' argument to template()";
     my $theme = $args{theme} || 'default';
     $theme = 'default' unless -d "$self->{theme_dir}/$theme";
 
@@ -59,7 +59,9 @@ sub template {
 
     # Parse all chunks from theme flavour page
     my $page = "$self->{theme_dir}/$theme/page.$flavour";
-    return '' unless -r $page;
+    die "[Plugin::Theme] cannot find '$flavour' template for '$theme' theme in $self->{theme_dir}\n"
+      unless -r $page;
+#   return '' unless -r $page;
     if (open my $fh, '<', $page) {
       my $current_chunk = '';
       while (my $line = <$fh>) {
