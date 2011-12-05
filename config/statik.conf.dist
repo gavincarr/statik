@@ -1,0 +1,103 @@
+# --- Main statik config file -----
+#
+# key = value pairs. Directory and file paths may be absolute
+# or relative - if the latter, they're a
+#
+
+# Blog title
+#blog_title = My Bløg
+
+# Blog description (for feeds etc.)
+#blog_description = Mutterings from the <dungeon>
+
+# Primary blog language
+#blog_language = en
+
+# Blog text encoding
+#blog_encoding = utf-8
+
+# Base URL for the blog
+#url = http://example.com/blog
+
+# Base directory for this blog (used to qualify any relative directories/files)
+#base_dir =
+
+# Directory where blog post files are found
+#post_dir = posts
+
+# Directory where static output files should go
+#static_dir = static
+
+# Directory where state files should go
+#state_dir = state
+
+# How many posts to show per page (all flavours, unless overridden per-flavour).
+# Default: 20.
+#posts_per_page = 20
+
+# Maximum number of pages to generate for indexes (all flavours, unless overridden).
+# 0 = no limit. Default: 1.
+#max_pages = 1
+
+# File extension used on post files. Default: txt
+#file_extension = txt 
+
+# Should we show entries dated in the future?
+#show_future_entries = no
+
+# List of plugins statik should load
+#plugin_list = config/plugins.conf
+
+# List of directories where plugins are located (separated by ':' or ';')
+#plugin_path = plugins
+
+# Flavours/themes of (multi-post) index pages to generate (comma-separated)
+# Flavours are filetype suffixes, and themes are subdirectories of base_dir/themes
+# Format is flavour:theme, if theme is omitted it defaults to 'default'
+#index_flavours = html,atom
+
+# Flavours/themes of individual post pages to generate (comma-separated)
+# Flavours are filetype suffixes, and themes are subdirectories of base_dir/themes
+# Format is flavour:theme, if theme is omitted it defaults to 'default'
+# (comment out or unset to not generate individual post pages at all)
+#post_flavours = html
+
+# Blog author's name (required for atom feeds)
+#author_name = Jane Author
+
+# Year your blog started (used as part of atom feed unique id, and must not change)
+#blog_id_year = 2011
+
+# Domain to use as part of your atom feed unique id, and must not change
+# Derived from url, if unset.
+#blog_id_domain =
+
+
+
+#[Statik::Plugin::Theme]
+
+# Where do your themes live? (if relative, 'base_dir' is prefixed)
+#theme_dir = themes
+
+# What's the URL of your themes directory (if relative, 'url' is prefixed)
+#theme_url = themes
+
+
+
+#[Statik::Plugin::Entries]
+
+# What name should my index file be called?
+#entries_index             => 'entries.index',
+
+# Whether to follow symlinks in posts directory
+#follow_symlinks           => 0,
+
+# Optional flag file (or directory) updated on new/updated/deleted posts
+#posts_flag                => '',
+
+# Post header to check for timestamp, overriding mtime if set
+#post_timestamp_header     => 'Date',
+
+# Post timestamp strptime(1) format (required if post_timestamp_header is set)
+#post_timestamp_format     => '%Y-%m-%d %T',
+
