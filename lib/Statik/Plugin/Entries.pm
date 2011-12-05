@@ -30,7 +30,7 @@ sub defaults {
     # Optional flag file (or directory) updated on new/updated/deleted posts
     posts_flag                => '',
     # Post header to check for timestamp, overriding mtime if set
-    post_timestamp_header     => '',
+    post_timestamp_header     => 'Date',
     # Post timestamp strptime(1) format (required if post_timestamp_header is set)
     post_timestamp_format     => '%Y-%m-%d %T',
   };
@@ -58,7 +58,7 @@ sub entries {
     if (open my $fh, $self->{index_file})  {
       my $index_data = eval { local $/ = undef; $self->json->decode(<$fh>) };
       if ($@) {
-        warn "[entries_default] loading entries index '$self->{entries_index}' failed: $@\n";
+        warn "[entries_default] Warning: loading entries index '$self->{entries_index}' failed: $@\n";
       }
       else {
         $files = $index_data->{files};
@@ -69,7 +69,7 @@ sub entries {
     # debug(1, sprintf("loaded %d files, %d symlinks from %s", scalar keys %$files, scalar keys %$symlinks, $self->{entries_index}));
   }
   elsif ($self->{index_file}) {
-    warn "[entries_default] no entries index '$self->{entries_index}' found\n";
+    warn "[entries_default] Warning: no entries index '$self->{entries_index}' found\n";
   }
 
   # Check posts_flag if set
@@ -238,7 +238,25 @@ creation timestamp on posts
 
 =head1 SYNOPSIS
 
-To configure, add some or all of the following to your statik.conf:
+To configure, add a section like the following to your statik.conf file
+(defaults shown):
+
+    [Statik::Plugin::Entries]
+    # What name should my index file be called?
+    #entries_index             => 'entries.index',
+
+    # Whether to follow symlinks in posts directory
+    #follow_symlinks           => 0,
+
+    # Optional flag file (or directory) updated on new/updated/deleted posts
+    #posts_flag                => '',
+
+    # Post header to check for timestamp, overriding mtime if set
+    #post_timestamp_header     => 'Date',
+
+    # Post timestamp strptime(1) format (required if post_timestamp_header is set)
+    #post_timestamp_format     => '%Y-%m-%d %T',
+
 
 =head1 DESCRIPTION
 
