@@ -21,7 +21,7 @@ sub new {
   $self->{configfile} = delete $arg{config} 
       or croak "Required argument 'config' missing";
   $self->{options} = {};
-  for (qw(force verbose noop)) {    # optional
+  for (qw(force verbose noop path)) {    # optional
     $self->{options}->{$_} = delete $arg{$_};
   }
   croak "Invalid arguments: " . join(',', sort keys %arg) if %arg;
@@ -73,14 +73,24 @@ sub generate {
   };
   my @entries_list = $sort_sub->( $entries );
 
-  # Hook: paginate
+  # Hook: paths
   my %generate_paths = $plugins->call_all('paths',
     entries_list => \@entries_list,
     entries_map => $entries,
     updates => $updates,
   );
+  if (defined $self->{options}->{path} and %generate_paths) {
+    my %extracted = ();
+    for (@{ $self->{options}->{path} }) {
+      $_ = '' if $_ eq '/';
+      $extracted{$_} = $generate_paths{$_};
+    }
+    %generate_paths = %extracted;
+    printf "+ Paths pruned, %d entries remaining\n", scalar keys %generate_paths
+      if $self->{options}->{verbose};
+  }
   print $self->{json}->encode(\%generate_paths)
-    if $self->{options}->{verbose} >= 2 and keys %generate_paths;
+    if $self->{options}->{verbose} >= 2 and %generate_paths;
 
   # Generate static pages
   my $gen = Statik::Generator->new(

@@ -15,6 +15,7 @@ my ($opt, $usage) = describe_options(
   [ 'config|c=s'    => '<config_file> - statik config file (default: config/statik.conf)',
                         { default => 'config/statik.conf' } ],
   [ 'force|f'       => 'force all entries to be regenerated' ],
+  [ 'path|p=s@'      => 'generate only entries for these paths' ],
   [ 'noop|n'        => "don't do updates, just show what would be done", 
                        { implies => { verbose => 1 } } ],
   [ 'verbose|v+'    => 'print more verbose output' ],
@@ -26,6 +27,7 @@ print($usage->text), exit if @ARGV;
 Statik->new(
   config    => $opt->config,
   force     => $opt->force,
+  path      => $opt->path,
   noop      => $opt->noop,
   verbose   => $opt->verbose || 0,
 )->generate;
