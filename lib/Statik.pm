@@ -57,7 +57,8 @@ sub generate {
   # Hook: entries
   print "+ Loading entries from $config->{post_dir}\n" 
     if $self->{options}->{verbose};
-  my ($entries, $updates) = $plugins->call_first('entries', config => $config);
+  my ($entries, $updates) = $plugins->call_first('entries',
+    config => $config, posts => $self->{posts});
   printf "+ Found %d post files, %d updated\n",
     scalar keys %$entries, scalar keys %$updates 
       if $self->{options}->{verbose};

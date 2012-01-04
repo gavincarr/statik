@@ -1,6 +1,6 @@
 # Name: Statik::Plugin::Entries
 # Author(s): Gavin Carr <gavin@openfusion.com.au>
-# Version: 0.001
+# Version: 0.002
 # Documentation: See the bottom of this file or type: perldoc Statik::Plugin::Entries
 
 package Statik::Plugin::Entries;
@@ -13,6 +13,7 @@ use File::Find;
 use File::Copy qw(move);
 use Time::Local;
 use Time::Piece;
+use Carp;
 
 # Uncomment next line to enable debug output (don't uncomment debug() lines)
 #use Blosxom::Debug debug_level => 2;
@@ -38,17 +39,35 @@ sub defaults {
 
 # -------------------------------------------------------------------------
 
-# Entries hook - returns a hashref of post files => (canonical) mtime, and
-# another hashref of post files that need to be updated
-sub entries {
+# Utility to produce a new hash of file => canonical mtime entries from the $posts hash
+sub map_canonical_mtimes {
   my $self = shift;
+  my $posts = shift;
+
+  my $files = {};
+  for (keys %$posts) {
+    $files->{$_} = $posts->{$_}->{header_mtime} || $posts->{$_}->{create_mtime};
+  }
+
+  return $files;
+}
+
+# Entries hook - returns a hashref of post files => canonical mtime, and
+# another hashref of post files that need to be updated
+sub entries
+{
+  my $self = shift;
+  my %arg = @_;
+
   my $config = $self->config;
+  my $post_cache = $arg{posts}               # our Statik::Posts object
+    or croak "Missing required 'posts' argument";
 
   $self->{update_flag} = 0;
   $self->{index_file} = "$config->{state_dir}/$self->{entries_index}"
     if $self->{entries_index} ne '';
 
-  my $files = {};
+  my $posts = {};
   my $symlinks = {};
   my $max_mtime = 0;
   my $updates = {};
@@ -61,24 +80,24 @@ sub entries {
         warn "[entries_default] Warning: loading entries index '$self->{entries_index}' failed: $@\n";
       }
       else {
-        $files = $index_data->{files};
+        $posts = $index_data->{posts};
         $symlinks = $index_data->{symlinks};
         $max_mtime = $index_data->{max_mtime} || 0;
       }
     }
-    # debug(1, sprintf("loaded %d files, %d symlinks from %s", scalar keys %$files, scalar keys %$symlinks, $self->{entries_index}));
+    # debug(1, sprintf("loaded %d posts, %d symlinks from %s", scalar keys %$posts, scalar keys %$symlinks, $self->{entries_index}));
   }
   elsif ($self->{index_file}) {
     warn "[entries_default] Warning: no entries index '$self->{entries_index}' found\n";
   }
 
-  # Check posts_flag if set
+  # If posts_flag is set, we skip all processing unless posts_flag file has been touched
   if ($self->{posts_flag}) {
     if (-e $self->{posts_flag}) {
       my $flag_mtime = stat($self->{posts_flag})->mtime;
       if ($flag_mtime <= $max_mtime) {
         # debug(1, "flag_mtime $flag_mtime <= max_mtime $max_mtime - no new posts, skipping checks");
-        return ($files, {});
+        return ($self->map_canonical_mtimes($posts), {});
       }
       else {
         # debug(1, "flag_mtime $flag_mtime > max_mtime $max_mtime - doing full check");
@@ -92,10 +111,11 @@ sub entries {
   }
 
   # Check for deleted files
-  for my $file (keys %$files) { 
+  for my $file (keys %$posts) { 
     if ( ! -f $file || ( -l $file && ! -f readlink($file)) ) {
+      $updates->{$file} = 1;
       $self->{updates_flag}++; 
-      delete $files->{$file};
+      delete $posts->{$file};
       delete $symlinks->{$file};
       # debug(2, "deleting removed file '$file' from updates");
     } 
@@ -130,79 +150,68 @@ sub entries {
         if ( -l $File::Find::name ) {
           if (! exists $symlinks->{ $File::Find::name }) {
             $symlinks->{$File::Find::name} = 1;
+            $updates->{$File::Find::name} = 1;
             $self->{updates_flag}++;
             # debug(2, "new file_symlinks entry $path_filename_ext, updates_flag now $self->{updates_flag}");
           }
         }
 
-        # Else if a new post file, add to $files
-        elsif (! exists $files->{$File::Find::name}) {
-          $files->{$File::Find::name} = $mtime;
+        # Else if a new post file, add to $posts
+        elsif (! exists $posts->{$File::Find::name}) {
+          $posts->{$File::Find::name} = { create_mtime => $mtime, current_mtime => $mtime };
+          $updates->{$File::Find::name} = 1;
           $self->{updates_flag}++;
           $max_mtime = $mtime if $mtime > $max_mtime;
           # debug(2, "new file entry $path_filename_ext, updates_flag now $self->{updates_flag}");
         }
 
-        # If the index for this file is out-of-date, add to updates list
-        my $index_file = "$config->{static_dir}/$path/index.$config->{index_flavours}->[0]";
-        if ($self->options->{force}
-            or ! -f $index_file
-            or stat($index_file)->mtime < $mtime) {
-          # debug(3, "index_file $index_file out of date") unless $self->options->{force};
+        # If an existing file, check if updated
+        elsif ($mtime > $posts->{$File::Find::name}->{current_mtime}) {
+          $posts->{$File::Find::name}->{current_mtime} = $mtime;
           $updates->{$File::Find::name} = 1;
+          $self->{updates_flag}++;
           $max_mtime = $mtime if $mtime > $max_mtime;
+        }
+
+        # If --force is set, we add *all* files to the updates set
+        elsif ($self->options->{force}) {
+          $updates->{$File::Find::name} = 1;
+          $self->{updates_flag}++;
         }
       }
     }, $config->{post_dir}
   );
 
-  # Add symlinks to $files with mtime of symlink target
+  # Add symlinks to $posts with mtime of symlink target
   for (keys %$symlinks) {
     my $target = readlink $_ or next;
     # Note that we only support symlinks pointing to other posts
-    $files->{$_} = $files->{$target} if exists $files->{$target};
+    $posts->{$_} = $posts->{$target} if exists $posts->{$target};
   }
 
-  # Store $files, $symlinks and $max_mtime in $self for later hooks
-  $self->{files} = $files;
+  # Store $posts, $symlinks and $max_mtime in $self for later hooks
+  $self->{posts} = $posts;
   $self->{symlinks} = $symlinks;
   $self->{max_mtime} = $max_mtime;
 
-  return ($files, $updates);
-}
+  # If post_timestamp_header is set, we need to re-extract header timestamps
+  # from all updated posts.
+  if (my $header = $self->{post_timestamp_header}) {
+    for my $file (keys %$updates) {
+      # Updates may be deletes
+      -f $file or next;
 
-# Post hook, for updating timestamps from post_timestamp_header values
-sub post {
-  my ($self, %arg) = @_;
-  my $config = $self->config;
-  my $stash = $arg{stash};
-
-  my $timestamp;
-  if ($self->{post_timestamp_header} and
-      $timestamp = $stash->{"header_$self->{post_timestamp_header}"}) {
-    if (my $format = $self->{post_timestamp_format}) {
-      if (my $t = eval { Time::Piece->strptime($timestamp, $format) }) {
-
-        my $fullpath = $stash->{post_fullpath};
-        # debug(2, "Timestamp header for $fullpath: " . $t->strftime('%Y-%m-%d %T %z'));
-        my $header_mtime = $t->epoch;
-        my $cache_mtime = $self->{files}->{$fullpath};
-        if (! $cache_mtime || $cache_mtime != $header_mtime) {
-          # debug(1, "Updating cache from timestamp header: $fullpath => " . $t->strftime('%Y-%m-%d %T %z'));
-          $self->{files}->{$fullpath} = $header_mtime;
-          $self->{updates_flag}++;
-        }
+      my $post = $post_cache->fetch( path => $file );
+      my ($timestamp, $t);
+      if ($timestamp = $post->{headers}->{$header} and
+          $t = eval { Time::Piece->strptime($timestamp, $self->{post_timestamp_format}) } ) {
+        # Record header_mtime as epoch of post_timestamp_header
+        $self->{posts}->{$file}->{header_mtime} = $t->epoch;
       }
-      else {
-        warn "post_timestamp_header '$self->{post_timestamp_header}: $timestamp' not in format '$format' - skipping\n";
-      }
-    }
-    else {
-      warn "post_timestamp_format not set - required if using post_timestamp_header\n";
     }
   }
 
-  return 1;
+  return ($self->map_canonical_mtimes($posts), $updates);
 }
 
 # Save index data if we've made any updates
@@ -214,9 +223,9 @@ sub end {
     # debug(1, "$self->{updates_flag} update(s), saving data to $self->{entries_index}");
     if (open my $index, '>', "$self->{index_file}.tmp") {
       print $index $self->json->encode({ 
-        files => $self->{files},
-        symlinks => $self->{symlinks},
-        max_mtime => $self->{max_mtime},
+        posts       => $self->{posts},
+        symlinks    => $self->{symlinks},
+        max_mtime   => $self->{max_mtime},
       }) and
       close $index and
       move("$self->{index_file}.tmp", $self->{index_file});
@@ -248,7 +257,7 @@ To configure, add a section like the following to your statik.conf file
     # Whether to follow symlinks in posts directory
     #follow_symlinks           => 0,
 
-    # Optional flag file (or directory) updated on new/updated/deleted posts
+    # Optional flag file (or directory) updated by user on new/updated/deleted posts
     #posts_flag                => '',
 
     # Post header to check for timestamp, overriding mtime if set
@@ -261,8 +270,9 @@ To configure, add a section like the following to your statik.conf file
 =head1 DESCRIPTION
 
 Statik::Plugin::Entries is a statik plugin for capturing and preserving
-the original creation timestamp on posts. It maintains an index file
-(configurable, but 'entries_default.index' by default) of creation
+the original creation timestamp on posts, and (if post_timestamp_header
+is set) for extracting header timestamps from posts. It maintains an
+index file (configurable, but 'entries.index' by default) of these
 timestamps for all posts, and returns a file hash with modification
 times from that index.
 
@@ -270,8 +280,6 @@ times from that index.
 
 Statik::Plugin::Entries currently only supports symlinks to local
 post files, not symlinks to arbitrary files outside your post_dir.
-
-Statik::Plugin::Entries doesn't currently do any kind caching.
 
 Please report bugs directly to the author.
 
