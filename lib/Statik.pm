@@ -90,7 +90,7 @@ sub generate {
       if $self->{options}->{verbose};
   }
   print $self->{json}->encode(\%generate_paths)
-    if $self->{options}->{verbose} >= 2 and %generate_paths;
+    if $self->{options}->{verbose} >= 3 and %generate_paths;
 
   # Generate static pages
   my $gen = Statik::Generator->new(
