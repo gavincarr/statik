@@ -214,10 +214,10 @@ collection.
 
 For index pages, the total number of pages in the current collection.
 
-=item index_updated
+=item index_updated, index_updated_XXX
 
-A datetime variable (see L<set_as_date> above) represending the mtime of the
-newest post in the current collection.
+A set of datetime variables (see L<set_as_date> below) representing the
+mtime of the newest post in the current collection.
 
 =back
 
@@ -242,16 +242,16 @@ concatenation works cleanly.
 
 post_fullpath basename (i.e. filename, without any path), without file_extension.
 
-=item post_created
+=item post_created, post_created_XXX
 
-A datetime variable (see L<set_as_date> above) representing the nominal creation
-datetime for this post (either as set explicitly via a header, or from the earliest
-mtime seen by Statik for this post).
+A set of datetime variables (see L<set_as_date> below) representing the
+nominal creation datetime for this post (either as set explicitly via a
+header, or from the earliest mtime seen by Statik for this post).
 
-=item post_updated
+=item post_updated, post_updated_XXX
 
-A datetime variable (see L<set_as_date> above) representing the current mtime
-of this post.
+A set of datetime variables (see L<set_as_date> below) representing the
+current mtime of this post.
 
 =item header_XXX
 
