@@ -170,6 +170,9 @@ sub generate_index_pages {
 
       @page_files = ();
       $page_num++;
+
+      # Only ever generate a single atom page
+      last if $flavour eq 'atom';
     }
   }
 }
