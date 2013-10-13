@@ -27,6 +27,7 @@ sub defaults {
 sub start {
   my $self = shift;
   $self->{markup} = Text::Markdown->new(
+    empty_element_suffix => '>',
     tab_width => 0,
   ) or die "Text::Markdown instantiation failed: $!";
 }
