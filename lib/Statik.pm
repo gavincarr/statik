@@ -18,7 +18,7 @@ sub new {
   my $self = bless {}, $class;
 
   # Check arguments
-  $self->{configfile} = delete $arg{config} 
+  $self->{configfile} = delete $arg{config}
       or croak "Required argument 'config' missing";
   $self->{options} = {};
   for (qw(force verbose noop path)) {    # optional
@@ -55,12 +55,12 @@ sub generate {
   my $plugins = $self->{plugins};
 
   # Hook: entries
-  print "+ Loading entries from $config->{post_dir}\n" 
+  print "+ Loading entries from $config->{post_dir}\n"
     if $self->{options}->{verbose};
   my ($entries, $updates) = $plugins->call_first('entries',
     config => $config, posts => $self->{posts});
   printf "+ Found %d post files, %d updated\n",
-    scalar keys %$entries, scalar keys %$updates 
+    scalar keys %$entries, scalar keys %$updates
       if $self->{options}->{verbose};
 
   # Hook: filter
@@ -112,3 +112,44 @@ sub generate {
 }
 
 1;
+
+__END__
+
+=head1 NAME
+
+Statik - top-level class of the Statik blogging engine
+
+=head1 SYNOPSIS
+
+  use Statik;
+
+  # Constructor
+  $statik = Statik->new(
+    config      => $statik_configfile_path,
+  );
+
+  # Generate/refresh output pages
+  $statik->generate;
+
+=head1 DESCRIPTION
+
+Statik is the top-level class of the Statik blogging engine.
+
+=head1 SEE ALSO
+
+L<statik>, L<Statik::Stash>, L<Statik::Generator>, L<Statik::Plugin>
+
+=head1 AUTHOR
+
+Gavin Carr <gavin@openfusion.com.au>
+
+=head1 COPYRIGHT AND LICENCE
+
+Copyright (C) Gavin Carr 2011-2013.
+
+This library is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself, either Perl version 5.8.0 or, at
+your option, any later version of Perl 5.
+
+=cut
+

@@ -16,7 +16,7 @@ my ($opt, $usage) = describe_options(
                         { default => 'config/statik.conf' } ],
   [ 'force|f'       => 'force all entries to be regenerated' ],
   [ 'path|p=s@'      => 'generate only entries for these paths' ],
-  [ 'noop|n'        => "don't do updates, just show what would be done", 
+  [ 'noop|n'        => "don't do updates, just show what would be done",
                        { implies => { verbose => 1 } } ],
   [ 'verbose|v+'    => 'print more verbose output' ],
   [ 'help|h|?'      => 'print usage message and exit' ],
@@ -24,13 +24,53 @@ my ($opt, $usage) = describe_options(
 print($usage->text), exit if $opt->help;
 print($usage->text), exit if @ARGV;
 
-Statik->new(
+my $statik = Statik->new(
   config    => $opt->config,
   force     => $opt->force,
   path      => $opt->path,
   noop      => $opt->noop,
   verbose   => $opt->verbose || 0,
-)->generate;
+);
+
+$statik->generate;
 
 __END__
+
+=head1 NAME
+
+statik - command-line utility for generating output pages using Statik
+
+=head1 SYNOPSIS
+
+  # Generate statik output pages using defaults
+  statik
+
+  # More verbose output
+  statik -v
+
+  # Force generation of all pages even if statik thinks we're up to date
+  statik -f
+
+=head1 DESCRIPTION
+
+statik is a command-line utility for generating/updating static output
+pages using the Statik blogging engine.
+
+=head1 SEE ALSO
+
+L<Statik>
+
+=head1 AUTHOR
+
+Gavin Carr <gavin@openfusion.com.au>
+
+=head1 COPYRIGHT AND LICENCE
+
+Copyright (C) Gavin Carr 2011-2013.
+
+This library is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself, either Perl version 5.8.0 or, at
+your option, any later version of Perl 5.
+
+=cut
 
