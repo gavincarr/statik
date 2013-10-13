@@ -33,7 +33,7 @@ sub new {
     post_dir                => 'posts',
     static_dir              => 'static',
     state_dir               => 'state',
-    posts_per_page          => 20,
+    posts_per_page          => 10,
     max_pages               => 1,
     show_future_entries     => 0,
     file_extension          => 'txt',
@@ -126,10 +126,14 @@ sub _qualify_paths {
   }
 
   # Derive url_path and blog_id_domain, if not set
-  $self->{url} = clean_path($self->{url});
-  my $url = URI->new($self->{url});
-  $self->{blog_id_domain} ||= $url->host;
-  $self->{url_path} ||= clean_path($url->path);
+  if ($self->{url} =~ m/^https?/i) {
+    my $url = URI->new($self->{url}, 'http');
+    $self->{blog_id_domain} ||= $url->host;
+    $self->{url_path} = '/' . clean_path($url->path);
+  }
+  else {
+    $self->{url} = $self->{url_path} = '/' . clean_path($self->{url});
+  }
 }
 
 # Map boolean strings to ints

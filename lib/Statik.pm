@@ -31,8 +31,6 @@ sub new {
 
   # Load config file
   $self->{config} = Statik::Config->new(file => $self->{configfile});
-  print $self->{json}->encode($self->{config})
-    if $self->{options}->{verbose} >= 2;
 
   # Setup posts cache
   $self->{posts} = Statik::Posts->new(encoding => $self->{config}->{blog_encoding});
