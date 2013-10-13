@@ -15,6 +15,8 @@ use Time::Local;
 use Time::Piece;
 use Carp;
 
+use Statik::PostMutator;
+
 # Uncomment next line to enable debug output (don't uncomment debug() lines)
 #use Blosxom::Debug debug_level => 2;
 
@@ -25,22 +27,32 @@ use Carp;
 sub defaults {
   return {
     # What name should my index file be called?
-    entries_index             => 'entries.index',
+    entries_index                       => 'entries.index',
     # Whether to follow symlinks in posts directory
-    follow_symlinks           => 0,
-    # Optional flag file (or directory) updated on new/updated/deleted posts
-    posts_flag                => '',
+    follow_symlinks                     => 0,
+    # Optional flag file used to tell us about new/updated/deleted posts
+    posts_flag_file                     => '',
     # Post header to check for timestamp, overriding mtime if set
-    post_timestamp_header     => 'Date',
+    post_timestamp_header               => 'Date',
     # Post timestamp strptime(1) format (required if post_timestamp_header is set)
-    post_timestamp_format     => '%Y-%m-%d %T',
+    post_timestamp_format               => '%Y-%m-%d',
+    # Update posts to add missing timestamp headers (requires write access to posts)
+    post_add_missing_timestamp_headers  => 0,
   };
 }
 
 # -------------------------------------------------------------------------
 
+# Sanity check config
+sub start {
+  my $self = shift;
+  $self->_die("post_add_missing_timestamp_headers option requires post_timestamp_header and post_timestamp_format set\n")
+    if $self->{post_add_missing_timestamp_headers} &&
+      (! $self->{post_timestamp_header} || ! $self->{post_timestamp_format});
+}
+
 # Utility to produce a new hash of file => canonical mtime entries from the $posts hash
-sub map_canonical_mtimes {
+sub _map_canonical_mtimes {
   my $self = shift;
   my $posts = shift;
 
@@ -52,8 +64,8 @@ sub map_canonical_mtimes {
   return $files;
 }
 
-# Entries hook - returns a hashref of post files => canonical mtime, and
-# another hashref of post files that need to be updated
+# Entries hook - returns one hashref of post files => canonical mtime,
+# and a second hashref of post files that have been updated
 sub entries
 {
   my $self = shift;
@@ -77,7 +89,7 @@ sub entries
     if (open my $fh, $self->{index_file})  {
       my $index_data = eval { local $/ = undef; $self->json->decode(<$fh>) };
       if ($@) {
-        die "[entries_default] Warning: loading entries index '$self->{entries_index}' failed: $@\n";
+        die "[entries_default] Error: loading entries index '$self->{entries_index}' failed: $@\n";
       }
       else {
         $posts = $index_data->{posts};
@@ -97,7 +109,7 @@ sub entries
       my $flag_mtime = stat($self->{posts_flag})->mtime;
       if ($flag_mtime <= $max_mtime) {
         # debug(1, "flag_mtime $flag_mtime <= max_mtime $max_mtime - no new posts, skipping checks");
-        return ($self->map_canonical_mtimes($posts), {});
+        return ($self->_map_canonical_mtimes($posts), {});
       }
       else {
         # debug(1, "flag_mtime $flag_mtime > max_mtime $max_mtime - doing full check");
@@ -195,7 +207,7 @@ sub entries
   $self->{max_mtime} = $max_mtime;
 
   # If post_timestamp_header is set, we need to re-extract header timestamps
-  # from all updated posts.
+  # from all updated posts, in case they've changed.
   if (my $header = $self->{post_timestamp_header}) {
     for my $file (keys %$updates) {
       # Updates may be deletes
@@ -208,10 +220,14 @@ sub entries
         # Record header_mtime as epoch of post_timestamp_header
         $self->{posts}->{$file}->{header_mtime} = $t->epoch;
       }
+      elsif ($self->{post_add_missing_timestamp_headers}) {
+        $self->{missing_timestamp_headers} ||= {};
+        $self->{missing_timestamp_headers}->{$file} = 1;
+      }
     }
   }
 
-  return ($self->map_canonical_mtimes($posts), $updates);
+  return ($self->_map_canonical_mtimes($posts), $updates);
 }
 
 # Save index data if we've made any updates
@@ -221,17 +237,34 @@ sub end {
   # If updates, save back to index
   if ($self->{updates_flag} && $self->{index_file}) {
     # debug(1, "$self->{updates_flag} update(s), saving data to $self->{entries_index}");
-    if (open my $index, '>', "$self->{index_file}.tmp") {
+    if (open my $index, '>', "$self->{index_file}.$$.tmp") {
       print $index $self->json->encode({ 
         posts       => $self->{posts},
         symlinks    => $self->{symlinks},
         max_mtime   => $self->{max_mtime},
       }) and
       close $index and
-      move("$self->{index_file}.tmp", $self->{index_file});
+      move("$self->{index_file}.$$.tmp", $self->{index_file});
     }
     else {
-      warn "[entries_default] couldn't open $self->{index_file}.tmp for writing: $!\n";
+      $self->_die("Couldn't open $self->{index_file}.$$.tmp for writing: $!\n");
+    }
+  }
+
+  # If post_add_missing_timestamp_headers option is set, update posts missing timestamps
+  if ($self->{post_add_missing_timestamp_headers} && $self->{missing_timestamp_headers}) {
+    for my $file (keys %{ $self->{missing_timestamp_headers} }) {
+      print "++ updating post $file with timestamp header\n" if $self->options->{verbose} >= 2;
+
+      my $create_mtime = $self->{posts}->{$file}->{create_mtime};
+      if (! $create_mtime) {
+        warn "Cannot find create_mtime for post $file - skipping add of missing timestamp header\n";
+        next;
+      }
+      my $timestamp = localtime($create_mtime)->strftime($self->{post_timestamp_format});
+      my $post = Statik::PostMutator->new(file => $file, encoding => $self->config->{blog_encoding});
+      $post->add_header($self->{post_timestamp_header} => $timestamp);
+      $post->write;
     }
   }
 }
@@ -252,20 +285,22 @@ To configure, add a section like the following to your statik.conf file
 
     [Statik::Plugin::Entries]
     # What name should my index file be called?
-    #entries_index             => 'entries.index',
+    #entries_index                          = entries.index
 
-    # Whether to follow symlinks in posts directory
-    #follow_symlinks           => 0,
+    # Whether to follow symlinks within posts directory
+    #follow_symlinks                        = 0
 
     # Optional flag file (or directory) updated by user on new/updated/deleted posts
-    #posts_flag                => '',
+    #posts_flag_file                        =
 
     # Post header to check for timestamp, overriding mtime if set
-    #post_timestamp_header     => 'Date',
+    #post_timestamp_header                  = Date
 
     # Post timestamp strptime(1) format (required if post_timestamp_header is set)
-    #post_timestamp_format     => '%Y-%m-%d %T',
+    #post_timestamp_format                  = %Y-%m-%d
 
+    # Update posts to add missing timestamp headers (requires write access to posts)
+    #post_add_missing_timestamp_headers     = 0
 
 =head1 DESCRIPTION
 
@@ -285,11 +320,11 @@ Please report bugs directly to the author.
 
 =head1 AUTHOR
 
-Gavin Carr <gavin@openfusion.com.au>, http://www.openfusion.net/
+Gavin Carr <gavin@openfusion.com.au>
 
 =head1 LICENCE
 
-Copyright 2011, Gavin Carr.
+Copyright 2011-2013 Gavin Carr.
 
 This plugin is licensed under the terms of the GNU General Public Licence,
 v3, or at your option, any later version.
