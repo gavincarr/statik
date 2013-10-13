@@ -17,6 +17,8 @@ sub defaults {
   return {
     # Flag indicating whether all posts will be in markdown format
     all_posts_are_markdown => 0,
+    # Regex string of file extensions indicating posts in markdown format
+    markdown_posts_extension_regex => '(md|mkd)',
   };
 }
 
@@ -32,7 +34,9 @@ sub start {
 sub post {
   my ($self, %arg) = @_;
   my $stash = $arg{stash};
-  if ($self->{all_posts_are_markdown}) {
+  if ($self->{all_posts_are_markdown} ||
+     ($self->{markdown_posts_extension_regex} &&
+        $stash->{post_extension} =~ /$self->{markdown_posts_extension_regex}/)) {
     $self->_munge_template(template => \$stash->{body}, stash => $stash);
     $self->_munge_template(template => \$stash->{body_unesc}, stash => $stash);
   }
@@ -60,10 +64,11 @@ using the Text::Markdown perl module.
 =head1 CONFIGURATION
 
 To configure, add a section like the following to your statik.conf file
-(defaults shown):
+(defaults shown, all settings are optional):
 
     [Statik::Plugin::Markdown]
     all_posts_are_markdown = 0
+    markdown_posts_extension_regex = (md|mkd)
 
 
 =head1 SEE ALSO
