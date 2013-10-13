@@ -188,6 +188,14 @@ which might be interpolated into:
 
 =head2 CORE STASH VARIABLES
 
+Statik sets the following stash variables for all hooks:
+
+=over 4
+
+=item flavour
+
+=back
+
 Statik sets the following stash variables for all hooks after 'head':
 
 =over 4
@@ -240,7 +248,11 @@ concatenation works cleanly.
 
 =item post_filename
 
-post_fullpath basename (i.e. filename, without any path), without file_extension.
+post_fullpath basename (i.e. filename, without any path), without file extension.
+
+=item post_extension
+
+The file extension from post_fullpath.
 
 =item post_created, post_created_XXX
 

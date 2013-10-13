@@ -292,16 +292,22 @@ sub _generate_post {
   # post_fullpath is the absolute path to the text post file, including file_extension
   # post_path is the post_fullpath path relative to post_dir, and without the filename
   # post_filename is the post_fullpath basename without the file_extension
-  my ($post_filename, $post_path) = fileparse($post_fullpath, $self->{config}->{file_extension});
+  # post_extension is the file extension
+  my ($post_filename, $post_path) = fileparse($post_fullpath);
   die "Post file '$post_fullpath' has unexpected format - aborting" 
     unless $post_fullpath && $post_path;
   $post_path =~ s!^$self->{config}->{post_dir}/!!;
-  $post_filename =~ s!\.$!!;
+  my $post_extension;
+  if ($post_filename =~ m/^(.*)\.([^.]+)$/) {
+    $post_filename = $1;
+    $post_extension = $2;
+  }
 
   # Post path entries
   $stash->set(post_fullpath => $post_fullpath);
   $stash->set_as_path(post_path => $post_path);
   $stash->set(post_filename => $post_filename);
+  $stash->set(post_extension => $post_extension);
 
   # Post date entries
   $stash->set_as_date(post_created  => $self->{entries_map}->{$post_fullpath});
