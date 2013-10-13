@@ -101,10 +101,11 @@ constructor and various utility methods to plugins.
 
 The base constructor handles setting up config settings either from the
 defaults hash returned by the plugin defaults subroutine, or from any
-plugin section in the statik.conf file (overriding the defaults). Plugin
-config variables are made available as top-level attributes in the plugin
-object i.e. if you define a config item of 'name', it will be defined and
-available as $self->{name} to the plugin.
+plugin section in the statik.conf file (overriding the defaults).
+
+Plugin config variables are made available as top-level attributes in
+the plugin object i.e. if you define a config item of 'name', it will be
+defined and available as $self->{name} to the plugin.
 
 =head2 UTILITY METHODS
 
@@ -182,4 +183,3 @@ under the same terms as Perl itself, either Perl version 5.8.0 or, at
 your option, any later version of Perl 5.
 
 =cut
-
