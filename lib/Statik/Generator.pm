@@ -239,7 +239,7 @@ sub _generate_page {
   $self->{plugins}->call_all( 'head', template => \$head_tmpl, stash => $stash );
   $output .= $interpolate_sub->( template => $head_tmpl, stash => $stash );
 
-  # Posts
+  # Process posts
   my $current_date = '';
   for (my $i = 0; $i <= $#$post_fullpaths; $i++) {
     my ($date_output, $post_output);

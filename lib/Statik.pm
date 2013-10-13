@@ -41,7 +41,7 @@ sub new {
     options => $self->{options},
     posts   => $self->{posts},
   );
-  print $self->{json}->encode($self->{plugins})
+  print "++ plugins object: " . $self->{json}->encode($self->{plugins})
     if $self->{options}->{verbose} >= 2;
 
   return $self;

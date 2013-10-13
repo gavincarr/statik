@@ -73,7 +73,7 @@ sub _load_plugins {
       eval { require $plugin_name };
     }
     if ($@) {
-      warn "Error finding or loading blosxom plugin '$plugin': $@";
+      warn "Error finding or loading Statik plugin '$plugin': $@";
       next;
     }
 

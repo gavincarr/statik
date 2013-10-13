@@ -32,7 +32,7 @@ Makefile.PL
 MANIFEST
 MANIFEST.SKIP
 META.yml
-README
+README.md
 t/00_load.t
 t/01_smoketest.t
 t/02_date_check.t
@@ -186,6 +186,6 @@ t/tags/static/tag/two/index.html
 t/themes/default/page.atom
 t/themes/default/page.html
 themes/default/page.atom
-themes/html5/page.html
-themes/html5/style.css
+themes/default/page.html
+themes/default/style.css
 TODO
