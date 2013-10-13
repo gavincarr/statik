@@ -1,14 +1,38 @@
 # --- Main statik config file -----
 #
-# key = value pairs. Directory and file paths may be absolute
-# or relative - if the latter, they're a
+# key = value pairs. Don't quote values unless you want the quotes included.
+#
+# Default values are the first entry for each keyword. Subsequent entries are
+# examples.
+#
+# Settings marked 'required' should all be defined for sane results.
+#
+# Directory and file paths may be absolute or relative - if the latter, they're
+# made absolute using base_dir.
 #
 
-# Blog title
+# Blog title (required)
+#blog_title =
 #blog_title = My Bløg
 
+# Blog feed title (defaults to blog_title)
+#feed_title =
+
 # Blog description (for feeds etc.)
+#blog_description =
 #blog_description = Mutterings from the <dungeon>
+
+# Blog author's name (required, used in atom feeds)
+#author_name =
+#author_name = Jane Author
+
+# Year your blog started (required, used as part of atom feed unique id, and must not change)
+#blog_id_year =
+#blog_id_year = 2011
+
+# Domain to use as part of your atom feed unique id, and must not change (required)
+#blog_id_domain =
+#blog_id_domain = openfusion.com.au
 
 # Primary blog language
 #blog_language = en
@@ -16,10 +40,12 @@
 # Blog text encoding
 #blog_encoding = utf-8
 
-# Base URL for the blog
+# Base URL for the blog, generally safe to leave just a path
+#url = /
+#url = /blog
 #url = http://example.com/blog
 
-# Base directory for this blog (used to qualify any relative directories/files)
+# Base directory for this blog (required, used to qualify relative directories/files)
 #base_dir =
 
 # Directory where blog post files are found
@@ -32,8 +58,7 @@
 #state_dir = state
 
 # How many posts to show per page (all flavours, unless overridden per-flavour).
-# Default: 20.
-#posts_per_page = 20
+#posts_per_page = 10
 
 # Maximum number of pages to generate for indexes (all flavours, unless overridden).
 # 0 = no limit. Default: 1.
@@ -61,16 +86,6 @@
 # Format is flavour:theme, if theme is omitted it defaults to 'default'
 # (comment out or unset to not generate individual post pages at all)
 #post_flavours = html
-
-# Blog author's name (required for atom feeds)
-#author_name = Jane Author
-
-# Year your blog started (used as part of atom feed unique id, and must not change)
-#blog_id_year = 2011
-
-# Domain to use as part of your atom feed unique id, and must not change
-# Derived from url, if unset.
-#blog_id_domain =
 
 
 
