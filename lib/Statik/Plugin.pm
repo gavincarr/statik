@@ -5,6 +5,8 @@ package Statik::Plugin;
 use strict;
 use JSON;
 use Hash::Merge qw(merge);
+use Scalar::Util qw(blessed);
+use Carp;
 
 sub new {
   my ($class, %arg) = @_;
@@ -12,11 +14,11 @@ sub new {
 
   # Check arguments
   $self->{_config} = delete $arg{config}
-    or die "Required argument 'config' missing";
+    or croak "[$class] Required argument 'config' missing";
   $self->{_options} = delete $arg{options}
-    or die "Required argument 'options' missing";
+    or croak "[$class] Required argument 'options' missing";
   $self->{_posts} = delete $arg{posts}
-    or die "Required argument 'posts' missing";
+    or croak "[$class] Required argument 'posts' missing";
   die "Invalid arguments: " . join(',', sort keys %arg) if %arg;
 
   # Initialise
@@ -25,7 +27,7 @@ sub new {
   my $plugin_config = merge( $self->{_config}->{_config}->{$self->{name}}||{}, 
                              $self->defaults );
   for (qw(name)) {
-    die "Can't use reserved attribute '$_' as $self->{name} config item"
+    croak "[$class] Can't use reserved attribute '$_' as $self->{name} config item"
       if exists $plugin_config->{$_};
   }
   $self->{$_} = $plugin_config->{$_} foreach keys %$plugin_config;
@@ -59,6 +61,13 @@ sub posts {
 sub json {
   my $self = shift;
   return $self->{_json};
+}
+
+sub _die {
+  my $self = shift;
+  my $class = blessed $self;
+  my $first = shift;
+  die "[$class] $first", @_;
 }
 
 1;
@@ -143,7 +152,7 @@ to json e.g.
 =head2 HOOK METHODS
 
 Plugins can define hook methods which are called at various stages of
-processing by the main statik library and generator. The set of hooks
+processing by the Statik and Statik::Generator classes. The set of hooks
 which can be defined, and their expected arguments, are defined below.
 
 All hooks are passed the $self object, and then a set of name => value
@@ -160,7 +169,11 @@ this:
 
 =item start
 
+=item entries
+
 =item head
+
+=item date
 
 =item post
 
