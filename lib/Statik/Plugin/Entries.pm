@@ -60,7 +60,7 @@ sub entries
   my %arg = @_;
 
   my $config = $self->config;
-  my $post_cache = $arg{posts}               # our Statik::Posts object
+  my $post_factory = $arg{posts}               # our Statik::PostFactory object
     or croak "Missing required 'posts' argument";
 
   $self->{update_flag} = 0;
@@ -201,7 +201,7 @@ sub entries
       # Updates may be deletes
       -f $file or next;
 
-      my $post = $post_cache->fetch( path => $file );
+      my $post = $post_factory->fetch( path => $file );
       my ($timestamp, $t);
       if ($timestamp = $post->{headers}->{$header} and
           $t = eval { Time::Piece->strptime($timestamp, $self->{post_timestamp_format}) } ) {

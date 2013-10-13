@@ -1,9 +1,9 @@
-# Statik class for parsing, caching, and fetching statik posts
-#
-package Statik::Posts;
+# Statik class for reading and parsing Statik posts, with caching
+
+package Statik::PostFactory;
 
 use strict;
-use Statik::Parser;
+use Statik::Post;
 
 sub new {
   my ($class, %arg) = @_;
@@ -24,7 +24,7 @@ sub fetch {
   
   return $self->{cache}->{$path} if $self->{cache}->{$path};
 
-  $self->{cache}->{$path} = Statik::Parser->new(
+  $self->{cache}->{$path} = Statik::Post->new(
     file        => $path,
     encoding    => $self->{encoding},
   );

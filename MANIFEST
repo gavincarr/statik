@@ -16,7 +16,6 @@ inc/Module/Install/WriteAll.pm
 lib/Statik.pm
 lib/Statik/Config.pm
 lib/Statik/Generator.pm
-lib/Statik/Parser.pm
 lib/Statik/Plugin.pm
 lib/Statik/Plugin/Entries.pm
 lib/Statik/Plugin/MasonBlocks.pm
@@ -25,7 +24,8 @@ lib/Statik/Plugin/Sample.pm
 lib/Statik/Plugin/Tags.pm
 lib/Statik/Plugin/Theme.pm
 lib/Statik/PluginList.pm
-lib/Statik/Posts.pm
+lib/Statik/Post.pm
+lib/Statik/PostFactory.pm
 lib/Statik/Stash.pm
 lib/Statik/Util.pm
 Makefile.PL

@@ -7,7 +7,7 @@ use Carp;
 use FindBin qw($Bin);
 use lib "$Bin/../lib";
 use Statik::Config;
-use Statik::Posts;
+use Statik::PostFactory;
 use Statik::PluginList;
 use Statik::Generator;
 
@@ -32,8 +32,8 @@ sub new {
   # Load config file
   $self->{config} = Statik::Config->new(file => $self->{configfile});
 
-  # Setup posts cache
-  $self->{posts} = Statik::Posts->new(encoding => $self->{config}->{blog_encoding});
+  # Setup post factory
+  $self->{posts} = Statik::PostFactory->new(encoding => $self->{config}->{blog_encoding});
 
   # Load plugins
   $self->{plugins} = Statik::PluginList->new(

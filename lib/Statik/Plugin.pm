@@ -126,8 +126,8 @@ run. The options which may currently be defined here include 'verbose',
 
 =item posts()
 
-Returns a Statik::Posts object which can be used to fetch and parse
-individual posts e.g.
+Returns a Statik::PostFactory object which can be used to fetch and parse
+post files e.g.
 
     my $post = $self->posts->fetch( $post_fullpath );
 
@@ -176,7 +176,7 @@ Gavin Carr <gavin@openfusion.com.au>
 
 =head1 COPYRIGHT AND LICENCE
 
-Copyright (C) Gavin Carr 2011.
+Copyright (C) Gavin Carr 2011-2013.
 
 This library is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself, either Perl version 5.8.0 or, at
