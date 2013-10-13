@@ -3,6 +3,7 @@
 package Statik::Post;
 
 use strict;
+use Tie::IxHash;
 use Carp;
 
 sub new {
@@ -30,9 +31,8 @@ sub new {
   # Parse data
   my ($headers, $body) = split m/\n\s*\n/s, $self->{raw}, 2;
   $headers =~ s/\n\s+/ /sg;
-  $self->{headers} = {
-    map { split /\s*:\s*/, $_, 2 } grep /:/, split(/\n/, $headers)
-  };
+  tie my %headers, 'Tie::IxHash', map { split /\s*:\s*/, $_, 2 } grep /:/, split(/\n/, $headers);
+  $self->{headers} = \%headers;
   $self->{body} = $body;
 
   $self;
@@ -91,7 +91,7 @@ Gavin Carr <gavin@openfusion.com.au>
 
 =head1 COPYRIGHT AND LICENCE
 
-Copyright (C) Gavin Carr 2012-2013.
+Copyright (C) Gavin Carr 2011-2013.
 
 This library is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself, either Perl version 5.8.0 or, at
