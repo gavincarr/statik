@@ -77,7 +77,7 @@ sub entries
     if (open my $fh, $self->{index_file})  {
       my $index_data = eval { local $/ = undef; $self->json->decode(<$fh>) };
       if ($@) {
-        warn "[entries_default] Warning: loading entries index '$self->{entries_index}' failed: $@\n";
+        die "[entries_default] Warning: loading entries index '$self->{entries_index}' failed: $@\n";
       }
       else {
         $posts = $index_data->{posts};
