@@ -29,6 +29,7 @@ sub defaults {
 }
 
 # -------------------------------------------------------------------------
+# Hooks
 
 sub start {
   my $self = shift;
@@ -88,8 +89,8 @@ sub paths {
 
     $cache->{entries_map}->{$path} = { mtime => $entries_map->{$path}, tags => $tag_header };
     if ($new_post) {
-      printf "+ %s not in tag cache, adding %d tags\n", $rel_path, scalar @new_tags
-        if $self->options->{verbose};
+      printf "++ %s not in tag cache, adding %d tags\n", $rel_path, scalar @new_tags
+        if $self->options->{verbose} && ! $self->options->{force};
       for my $tag (@new_tags) {
         $tags{$tag}++;
         $cache->{tag_map}->{$tag} ||= {};
@@ -132,7 +133,7 @@ sub paths {
     }
   }
   printf "+ Tags affected by updates: %s\n", join(',', sort keys %tags) || '(none)'
-    if $self->options->{verbose};
+    if $self->options->{verbose} && ! $self->options->{force};
 
   # Map paths to entries_list subsets
   my %paths = ();
@@ -167,13 +168,45 @@ sub end {
     or die "Cannot rename tag cache '$fn1' to '$fn2': $!\n";
 }
 
+# -------------------------------------------------------------------------
+# Public methods
+
+# Expose configuration settings
+sub tag_root   { $_[0]->{tag_root} }
+sub tag_header { $_[0]->{tag_header} }
+
+# Return an arrayref of tags for the given $post_path 
+sub get_post_tags {
+  my ($self, $post_path) = @_;
+
+  $self->_croak("Missing 'post_path' argument") unless $post_path;
+  my $entry = $self->{cache}->{entries_map}->{$post_path} or return [];
+  my $tags = $entry->{tags} or return [];
+  return [ split /\s*,\s*/, $tags ];
+}
+
+# Return the number of posts
+sub get_tag_count {
+  my ($self, $tag) = @_;
+  $self->_croak("Missing 'tag' argument") unless $tag;
+  return $self->{cache}->{tag_counts}->{$tag} || 0;
+}
+
+# Return a hashref of all tag => post counts mappings
+sub get_tag_counts {
+  my $self = shift;
+  return $self->{cache}->{tag_counts};
+}
+
 1;
+
+__END__
 
 =head1 NAME
 
 Statik::Plugin::Tags - tagging plugin for Statik
 
-=head1 SYNOPSIS
+=head1 CONFIGURATION
 
 To configure, add a section like the following to your statik.conf file
 (defaults shown):
@@ -202,6 +235,35 @@ the following naming convention:
 tag_root defaults to 'tags', so posts tagged 'statik' would be in
 $static_dir/tags/statik/index.$flavour, which would typically map to a
 /tags/statik/ URL path.
+
+=head1 METHODS
+
+Statik::Plugin::Tags exposes number of public methods for use by other
+plugins:
+
+=over 4
+
+=item tag_root
+
+Returns the tag_root configuration setting for the plugin.
+
+=item tag_header
+
+Returns the tag_header configuration setting for the plugin.
+
+=item get_post_tags($post_path)
+
+Returns an arrayref of tags defined for the given post path.
+
+=item get_tag_count($tag)
+
+Returns the number of posts using the given tag.
+
+=item get_tag_counts
+
+Returns a hashref containing all tag => post_count mappings.
+
+=back
 
 =head1 AUTHOR
 
