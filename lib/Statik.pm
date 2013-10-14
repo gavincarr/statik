@@ -64,6 +64,12 @@ sub generate {
   # Hook: filter
   $plugins->call_all('filter', entries => $entries, updates => $updates);
 
+  # Hook: noindex (experimental)
+  my %noindex;
+  $plugins->call_all('noindex', noindex => \%noindex, entries => $entries, updates => $updates);
+  print "++ noindex: " . $self->{json}->encode(\%noindex)
+    if $self->{options}->{verbose} >= 2;
+
   # Hook: sort
   # TODO: hookify
   my $sort_sub = sub {
@@ -100,6 +106,7 @@ sub generate {
     entries_map     => $entries,
     entries_list    => \@entries_list,
     generate_paths  => \%generate_paths,
+    noindex         => \%noindex,
   );
   $gen->generate;
 

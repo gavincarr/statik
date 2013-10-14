@@ -15,7 +15,7 @@ sub new {
   my $self = bless {}, ref $class || $class;
 
   # Check required arguments
-  for (qw(config options posts plugins entries_map entries_list generate_paths)) {
+  for (qw(config options posts plugins entries_map entries_list generate_paths noindex)) {
     $self->{$_} = delete $arg{$_} 
       or croak "Required argument '$_' missing";
   }
@@ -129,8 +129,7 @@ sub generate_index_pages {
     my $index_mtime = 0;
     for my $post_fullpath (@$posts) {
       die "Missing post file '$post_fullpath'" unless -f $post_fullpath;
-      (my $post_file = $post_fullpath) =~ s!^$self->{config}->{post_dir}/!!;
-      push @page_files, $post_fullpath;
+      push @page_files, $post_fullpath unless $self->{noindex}->{$post_fullpath};
 
       my $mtime = stat($post_fullpath)->mtime;
       $index_mtime = $mtime if $mtime > $index_mtime;
