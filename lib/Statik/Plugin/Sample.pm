@@ -12,7 +12,7 @@ use parent qw(Statik::Plugin);
 #use Smart::Comments
 
 # -------------------------------------------------------------------------
-# Configuration defaults. To change, add a [Statik::Plugin::Tags] section to 
+# Configuration defaults. To change, add a [Statik::Plugin::Sample] section to
 # your statik.conf config, and update as key = value entries.
 
 sub defaults {
@@ -23,6 +23,7 @@ sub defaults {
 }
 
 # -------------------------------------------------------------------------
+# Hooks (delete those you aren't required)
 
 sub start {
   my $self = shift;
@@ -54,7 +55,7 @@ First Last <first.last@example.com>
 
 =head1 COPYRIGHT AND LICENCE
 
-Copyright (C) First Last 2011.
+Copyright (C) First Last 2013.
 
 This library is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself, either Perl version 5.8.0 or, at
