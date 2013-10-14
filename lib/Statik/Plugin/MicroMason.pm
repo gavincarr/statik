@@ -1,24 +1,22 @@
-# Name: Statik::Plugin::MasonBlocks
+# Name: Statik::Plugin::MicroMason
 # Author(s): Gavin Carr <gavin@openfusion.com.au>
 # Version: 0.001
-# Documentation: see bottom of file or type 'perldoc Statik::Plugin::MasonBlocks'
+# Documentation: see bottom of file or type 'perldoc Statik::Plugin::MicroMason'
 
-package Statik::Plugin::MasonBlocks;
+package Statik::Plugin::MicroMason;
 
 use strict;
 use parent qw(Statik::Plugin);
 use Text::MicroMason;
 
 # -------------------------------------------------------------------------
-# Configuration defaults. To change, add a [Statik::Plugin::MasonBlocks]
+# Configuration defaults. To change, add a [Statik::Plugin::MicroMason]
 # section to your statik.conf config, and update as key = value entries.
 
 sub defaults {
   return {
     # Whether we munge post bodies as well as templates (default: no)
     munge_post_bodies => 0,
-    # Comma-separated list of variables to default to '' in templates
-    define_variables => '',
   };
 }
 
@@ -50,8 +48,7 @@ sub post {
   my %arg = @_;
   my $stash = $arg{stash};
   if ($self->{munge_post_bodies}) {
-    $self->_munge_template(template => \$stash->{body}, stash => $stash);
-    $self->_munge_template(template => \$stash->{body_unesc}, stash => $stash);
+    $self->_munge_template(hook => 'post(body)', template => \$stash->{body}, stash => $stash);
   }
   $self->_munge_template(hook => 'post', @_);
 }
@@ -63,15 +60,26 @@ sub _munge_template {
   # TODO: should we clone this here, to avoid pollution, or do we want the continuity?
   my $stash = $arg{stash};
 
-  # Add our define_variables list to stash
-  for my $var (split /\s*,\s*/, $self->{define_variables}) {
-    $stash->{$var} = '' if not defined $stash->{$var};
-  }
+  # Skip munging if template is empty
+  return if ! $$template_ref || $$template_ref =~ m/^\s*$/;
+
+  # Add optional_variables to stash
+# for my $var (split /\s*,\s*/, $self->{optional_variables}) {
+#   $stash->{$var} = '' if not defined $stash->{$var};
+# }
 
   # Compile an arg list for Text::MicroMason. We could use -PassVariables
   # instead, but that only passes scalars, not e.g. $stash as a hashref
   my $args_section = "<%args>\n";
-  $args_section .= "\$$_\n" foreach sort keys %$stash;
+  foreach my $var (sort keys %$stash) {
+    my $scrubbed_var = $var;
+    $scrubbed_var =~ s/\W+/_/g;
+    $scrubbed_var =~ s/__+/_/g;
+    $args_section .= "\$$scrubbed_var\n";
+    if ($scrubbed_var ne $var) {
+      $stash->{$scrubbed_var} = $stash->{$var};
+    }
+  }
   $args_section .= "\$stash\n";
   $args_section .= "</%args>\n";
 
@@ -87,7 +95,8 @@ sub _munge_template {
   if ($@) {
     # Text::MicroMason's errors are awful - truncate to the first line
     my @lines = split /\n/, $@;
-    die "$hook template error: $lines[0]\n";
+#   $self->_warn("template_ref:\n$args_section$$template_ref\n");
+    $self->_die("$hook template error: $lines[0]\n");
   }
   else {
     # Trim trailing whitespace
@@ -103,7 +112,7 @@ __END__
 
 =head1 NAME
 
-Statik::Plugin::MasonBlocks - adds support for mason-style conditionals and
+Statik::Plugin::MicroMason - adds support for mason-style conditionals and
 comments to statik templates
 
 =head1 SYNOPSIS
@@ -138,7 +147,7 @@ comments to statik templates
 
 =head1 DESCRIPTION
 
-Statik::Plugin::MasonBlocks - adds support for mason-style conditionals and
+Statik::Plugin::MicroMason - adds support for mason-style conditionals and
 comments to statik templates, using the Text::MicroMason perl module.
 
 =head1 CONFIGURATION
@@ -146,7 +155,7 @@ comments to statik templates, using the Text::MicroMason perl module.
 To configure, add a section like the following to your statik.conf file
 (defaults shown):
 
-    [Statik::Plugin::MasonBlocks]
+    [Statik::Plugin::MicroMason]
     munge_post_bodies = 0
 
 
@@ -160,7 +169,7 @@ Gavin Carr <gavin@openfusion.com.au>, http://www.openfusion.net/
 
 =head1 LICENCE
 
-Copyright 2011, Gavin Carr.
+Copyright 2011-2013, Gavin Carr.
 
 This software is free software, licensed under the same terms as perl itself.
 
