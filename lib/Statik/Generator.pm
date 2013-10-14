@@ -140,7 +140,7 @@ sub generate_index_pages {
 
         @page_files = ();
         $page_num++;
-        last if $page_num > $max_pages;
+        last if $max_pages && $page_num > $max_pages;
       }
     }
     # Push any final partial page set
