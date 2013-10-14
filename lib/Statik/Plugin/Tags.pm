@@ -20,7 +20,7 @@ use List::MoreUtils qw(uniq);
 sub defaults {
   return {
     # Directory (in static_dir) to use as root for our tag indexes
-    tag_root                => 'tag',
+    tag_root                => 'tags',
     # Header in which to look for our comma-separated list of tags
     tag_header              => 'Tags',
     # Filename in which to store cached tag collection (in state_dir)
@@ -86,7 +86,7 @@ sub paths {
     (my $rel_path = $path) =~ s!^ $config->{post_dir} /!!x
       if $self->options->{verbose};
 
-    $cache->{entries_map}->{$path} = { mtime => $updates->{$path}, tags => $tag_header };
+    $cache->{entries_map}->{$path} = { mtime => $entries_map->{$path}, tags => $tag_header };
     if ($new_post) {
       printf "+ %s not in tag cache, adding %d tags\n", $rel_path, scalar @new_tags
         if $self->options->{verbose};
@@ -171,7 +171,7 @@ sub end {
 
 =head1 NAME
 
-Statik::Plugin::Tags - tagging plugin for statik
+Statik::Plugin::Tags - tagging plugin for Statik
 
 =head1 SYNOPSIS
 
@@ -180,7 +180,7 @@ To configure, add a section like the following to your statik.conf file
 
     [Statik::Plugin::Tags]
     # Directory (in static_dir) to use as root for our tag indexes
-    tag_root = tag
+    tag_root = tags
     # Header in which to look for our comma-separated list of tags
     tag_header = Tags
     # Filename in which to store cached tag collection (in state_dir)
@@ -189,7 +189,7 @@ To configure, add a section like the following to your statik.conf file
 
 =head1 DESCRIPTION
 
-Statik::Plugin::Tags is a statik plugin that generates tag-based index pages.
+Statik::Plugin::Tags is a Statik plugin that generates tag-based index pages.
 For each comma-separated tag found in the 'tag_header' post header, it
 generates index pages with all posts including that tag (in standard entries
 order).
@@ -199,9 +199,9 @@ the following naming convention:
 
   $static_dir/$tag_root/$tag/index.$flavour
 
-tag_root defaults to 'tag', so posts tagged 'statik' would be in
-$static_dir/tag/statik/index.$flavour, which would typically map to a
-/tag/statik/ URL path.
+tag_root defaults to 'tags', so posts tagged 'statik' would be in
+$static_dir/tags/statik/index.$flavour, which would typically map to a
+/tags/statik/ URL path.
 
 =head1 AUTHOR
 
@@ -209,7 +209,7 @@ Gavin Carr <gavin@openfusion.com.au>
 
 =head1 COPYRIGHT AND LICENCE
 
-Copyright (C) Gavin Carr 2011.
+Copyright (C) Gavin Carr 2011-2013.
 
 This library is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself, either Perl version 5.8.0 or, at
