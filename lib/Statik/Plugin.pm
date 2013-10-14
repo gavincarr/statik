@@ -70,6 +70,13 @@ sub _die {
   die "[$class] $first", @_;
 }
 
+sub _warn {
+  my $self = shift;
+  my $class = blessed $self;
+  my $first = shift;
+  warn "[$class] $first", @_;
+}
+
 1;
 
 =head1 NAME

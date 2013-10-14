@@ -89,7 +89,7 @@ sub entries
     if (open my $fh, $self->{index_file})  {
       my $index_data = eval { local $/ = undef; $self->json->decode(<$fh>) };
       if ($@) {
-        die "[entries_default] Error: loading entries index '$self->{entries_index}' failed: $@\n";
+        $self->_die("Error: loading entries index '$self->{entries_index}' failed: $@\n");
       }
       else {
         $posts = $index_data->{posts};
@@ -100,13 +100,13 @@ sub entries
     # debug(1, sprintf("loaded %d posts, %d symlinks from %s", scalar keys %$posts, scalar keys %$symlinks, $self->{entries_index}));
   }
   elsif ($self->{index_file}) {
-    warn "[entries_default] Warning: no entries index '$self->{entries_index}' found\n";
+    $self->_die("Error: no entries index '$self->{entries_index}' found\n");
   }
 
-  # If posts_flag is set, we skip all processing unless posts_flag file has been touched
-  if ($self->{posts_flag}) {
-    if (-e $self->{posts_flag}) {
-      my $flag_mtime = stat($self->{posts_flag})->mtime;
+  # If posts_flag_file is set, we skip all processing unless posts_flag_file has been touched
+  if ($self->{posts_flag_file}) {
+    if (-e $self->{posts_flag_file}) {
+      my $flag_mtime = stat($self->{posts_flag_file})->mtime;
       if ($flag_mtime <= $max_mtime) {
         # debug(1, "flag_mtime $flag_mtime <= max_mtime $max_mtime - no new posts, skipping checks");
         return ($self->_map_canonical_mtimes($posts), {});
@@ -118,7 +118,7 @@ sub entries
       }
     }
     else {
-      warn "[entries_default] posts_flag '$self->{posts_flag}' not found!\n";
+      $self->_warn("Warning: posts_flag_file '$self->{posts_flag_file}' not found!\n");
     }
   }
 
@@ -148,7 +148,7 @@ sub entries
         (my $path_filename_ext = $File::Find::name) =~ s!^\Q$config->{post_dir}\E/!!;
         # Return if an index, a dotfile, or unreadable
         if ( $filename eq 'index' or $filename =~ /^\./ or ! -r $File::Find::name ) {
-          # debug(1, "[entries_default] '$path_filename_ext' is an index, a dotfile, or is unreadable - skipping\n");
+          # debug(1, "'$path_filename_ext' is an index, a dotfile, or is unreadable - skipping\n");
           return;
         }
 
