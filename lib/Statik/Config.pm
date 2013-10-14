@@ -16,8 +16,14 @@ my @main_required    = qw(url author_name blog_id_year);
 my %main_booleans    = map { $_ => 1 } qw(show_future_entries);
 my %flavour_booleans = map { $_ => 1 } qw(xml_escape);
 my %flavour_defaults = (
-  theme         => 'default',
-  xml_escape    => 1,
+  html => {
+    theme         => 'default',
+    xml_escape    => 0,
+  },
+  atom => {
+    theme         => 'default',
+    xml_escape    => 1,
+  },
 );
 
 sub new {
@@ -157,7 +163,7 @@ sub _clean_flavours {
     my $flavour = $1;
     $self->{_config}->{$key}->{suffix} ||= $flavour;
 
-    my $fconfig = merge($self->{_config}->{$key}, \%flavour_defaults);
+    my $fconfig = merge($self->{_config}->{$key}, $flavour_defaults{$flavour});
 
     # Convert booleans
     for (keys %flavour_booleans) {
@@ -194,7 +200,7 @@ sub to_stash {
 # Return flavour config
 sub flavour {
   my ($self, $flavour) = @_;
-  $self->{_config}->{"flavour:$flavour"} ||= { %flavour_defaults };
+  $self->{_config}->{"flavour:$flavour"} ||= { %{$flavour_defaults{$flavour}} };
   return $self->{_config}->{"flavour:$flavour"};
 }
 

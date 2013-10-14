@@ -288,7 +288,7 @@ sub _generate_post {
   my $post = $self->{posts}->fetch(path => $post_fullpath);
 
   # Update stash with post data (note there are also X_unesc versions of
-  # these if flavour.xml_escape is set - which is the default)
+  # these if flavour.xml_escape is set e.g. for atom)
   # post_fullpath is the absolute path to the text post file, including file_extension
   # post_path is the post_fullpath path relative to post_dir, and without the filename
   # post_filename is the post_fullpath basename without the file_extension
