@@ -21,7 +21,7 @@ sub defaults {
 }
 
 # -------------------------------------------------------------------------
-# Hooks (delete those you aren't required)
+# Hooks
 
 sub start {
   my $self = shift;
@@ -35,7 +35,8 @@ sub start {
     my @noindex = map { chomp $_; "$post_dir$_" } grep ! /^#/, <$fh>;
     close $fh;
     $self->{noindex} = { map { $_ => 1 } @noindex };
-    print "+ noindex file: " . dump(\@noindex) . "\n";
+    print "++ noindex file: " . dump(\@noindex) . "\n"
+      if $self->options->{verbose} >= 2;
   }
 }
 
