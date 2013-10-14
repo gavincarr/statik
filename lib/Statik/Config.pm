@@ -40,6 +40,7 @@ sub new {
     show_future_entries     => 0,
     plugin_list             => 'config/plugins.conf',
     index_flavours          => 'html,atom',
+    post_flavours           => 'html',
   }, $class;
   $self->{_file} = realpath($self->{_file});
 
