@@ -5,7 +5,7 @@ package Statik::Plugin;
 use strict;
 use JSON;
 use Hash::Merge qw(merge);
-use Scalar::Util qw(blessed);
+use Scalar::Util qw(blessed weaken);
 use Carp;
 
 sub new {
@@ -19,9 +19,12 @@ sub new {
     or croak "[$class] Required argument 'options' missing";
   $self->{_posts} = delete $arg{posts}
     or croak "[$class] Required argument 'posts' missing";
+  $self->{_plugin_list} = delete $arg{plugin_list}
+    or croak "[$class] Required argument 'plugin_list' missing";
   die "Invalid arguments: " . join(',', sort keys %arg) if %arg;
 
   # Initialise
+  weaken $self->{_plugin_list};
   $self->{_json} = JSON->new->utf8->allow_blessed->convert_blessed->pretty;
   $self->{name} = ref $self;
   my $plugin_config = merge( $self->{_config}->{_config}->{$self->{name}}||{}, 
@@ -63,6 +66,12 @@ sub json {
   return $self->{_json};
 }
 
+sub find_plugin_which_can {
+  my $self = shift;
+  return $self->{_plugin_list}->find_plugin_which_can(@_);
+}
+
+# die/warn/croak helpers
 sub _die {
   my $self = shift;
   my $class = blessed $self;
@@ -70,11 +79,25 @@ sub _die {
   die "[$class] $first", @_;
 }
 
+sub _croak {
+  my $self = shift;
+  my $class = blessed $self;
+  my $first = shift;
+  croak "[$class] $first", @_;
+}
+
 sub _warn {
   my $self = shift;
   my $class = blessed $self;
   my $first = shift;
   warn "[$class] $first", @_;
+}
+
+sub _carp {
+  my $self = shift;
+  my $class = blessed $self;
+  my $first = shift;
+  carp "[$class] $first", @_;
 }
 
 1;

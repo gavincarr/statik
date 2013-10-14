@@ -78,9 +78,10 @@ sub _load_plugins {
     }
 
     push @{$self->{plugins}}, $plugin->new(
-      config    => $self->{config},
-      options   => $self->{options},
-      posts     => $self->{posts},
+      config        => $self->{config},
+      options       => $self->{options},
+      posts         => $self->{posts},
+      plugin_list   => $self,
     );
   }
   shift @INC foreach @{$self->{plugin_path}};
@@ -145,6 +146,14 @@ sub call_all {
 sub TO_JSON {
   my $self = shift;
   return { %$self };
+}
+
+# Search the plugin list for the first which has the specified method
+sub find_plugin_which_can {
+  my ($self, $method) = @_;
+  for my $plugin ($self->plugins) {
+    return $plugin if $plugin->can($method);
+  }
 }
 
 1;
