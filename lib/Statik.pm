@@ -74,7 +74,7 @@ sub generate {
   # TODO: hookify
   my $sort_sub = sub {
     my ($entries) = @_;
-    return sort { $entries->{$b} <=> $entries->{$a} } keys %$entries;
+    return sort { $entries->{$b}->{create_ts} <=> $entries->{$a}->{create_ts} } keys %$entries;
   };
   my @entries_list = $sort_sub->( $entries );
 

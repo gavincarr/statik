@@ -311,8 +311,8 @@ sub _generate_post {
   $stash->set(post_extension => $post_extension);
 
   # Post date entries
-  $stash->set_as_date(post_created  => $self->{entries_map}->{$post_fullpath});
-  $stash->set_as_date(post_updated  => stat($post_fullpath)->mtime);
+  $stash->set_as_date(post_created  => $self->{entries_map}->{$post_fullpath}->{create_ts});
+  $stash->set_as_date(post_updated  => $self->{entries_map}->{$post_fullpath}->{modify_ts});
 
   # post_headers are lowercased and mapped into header_xxx fields
   $stash->delete_all(qr/^header_/);
