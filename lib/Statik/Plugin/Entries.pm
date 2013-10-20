@@ -33,8 +33,10 @@ sub defaults {
     # Optional flag file used to tell us about new/updated/deleted posts
     posts_flag_file                     => '',
     # Post header to check for timestamp, overriding mtime if set
-    post_timestamp_header               => 'Date',
-    # Post timestamp strptime(1) format (required if post_timestamp_header is set)
+    post_created_timestamp_header       => 'Date',
+    post_modified_timestamp_header      => 'DateModified',
+    # Post timestamp strptime(1) format (required if post_created_timestamp_header
+    # and/or post_modified_timstamp_header is set)
     post_timestamp_format               => '%Y-%m-%d',
     # Update posts to add missing timestamp headers (requires write access to posts)
     post_add_missing_timestamp_headers  => 0,
@@ -46,22 +48,26 @@ sub defaults {
 # Sanity check config
 sub start {
   my $self = shift;
-  $self->_die("post_add_missing_timestamp_headers option requires post_timestamp_header and post_timestamp_format set\n")
+  $self->_die("post_add_missing_timestamp_headers option requires post_created_timestamp_header, post_modified_timestamp_header and post_timestamp_format set\n")
     if $self->{post_add_missing_timestamp_headers} &&
-      (! $self->{post_timestamp_header} || ! $self->{post_timestamp_format});
+      (! $self->{post_created_timestamp_header} ||
+       ! $self->{post_modified_timestamp_header} ||
+       ! $self->{post_timestamp_format});
 }
 
-# Utility to produce a new hash of file => canonical mtime entries from the $posts hash
-sub _map_canonical_mtimes {
+# Produce a new hash of file path => post timestamps
+sub _map_canonical_timestamps {
   my $self = shift;
   my $posts = shift;
 
-  my $files = {};
+  my $map = {};
   for (keys %$posts) {
-    $files->{$_} = $posts->{$_}->{header_mtime} || $posts->{$_}->{create_mtime};
+    $map->{$_} ||= {};
+    $map->{$_}->{create_ts} = $posts->{$_}->{header_created_ts} || $posts->{$_}->{create_mtime};
+    $map->{$_}->{modify_ts} = $posts->{$_}->{header_modified_ts} || $posts->{$_}->{current_mtime};
   }
 
-  return $files;
+  return $map;
 }
 
 # Entries hook - returns one hashref of post files => canonical mtime,
@@ -109,7 +115,7 @@ sub entries
       my $flag_mtime = stat($self->{posts_flag_file})->mtime;
       if ($flag_mtime <= $max_mtime) {
         # debug(1, "flag_mtime $flag_mtime <= max_mtime $max_mtime - no new posts, skipping checks");
-        return ($self->_map_canonical_mtimes($posts), {});
+        return ($self->_map_canonical_timestamps($posts), {});
       }
       else {
         # debug(1, "flag_mtime $flag_mtime > max_mtime $max_mtime - doing full check");
@@ -206,19 +212,25 @@ sub entries
   $self->{symlinks} = $symlinks;
   $self->{max_mtime} = $max_mtime;
 
-  # If post_timestamp_header is set, we need to re-extract header timestamps
+  # If post_created_timestamp_header is set, we need to re-extract header timestamps
   # from all updated posts, in case they've changed.
-  if (my $header = $self->{post_timestamp_header}) {
+  if (my $created_ts_header = $self->{post_created_timestamp_header}) {
     for my $file (keys %$updates) {
       # Updates may be deletes
       -f $file or next;
 
       my $post = $post_factory->fetch( path => $file );
-      my ($timestamp, $t);
-      if ($timestamp = $post->{headers}->{$header} and
+      my ($timestamp, $t, $modified_ts_header);
+      if ($timestamp = $post->{headers}->{$created_ts_header} and
           $t = eval { Time::Piece->strptime($timestamp, $self->{post_timestamp_format}) } ) {
-        # Record header_mtime as epoch of post_timestamp_header
-        $self->{posts}->{$file}->{header_mtime} = $t->epoch;
+        # Record header_created_ts as epoch of post_created_timestamp_header
+        $self->{posts}->{$file}->{header_created_ts} = $t->epoch;
+        if ($modified_ts_header = $self->{post_modified_timestamp_header} and
+            $timestamp = $post->{headers}->{$modified_ts_header} and
+            $t = eval { Time::Piece->strptime($timestamp, $self->{post_timestamp_format}) } ) {
+          # Record header_modified_ts as epoch of post_modified_timestamp_header
+          $self->{posts}->{$file}->{header_modified_ts} = $t->epoch;
+        }
       }
       elsif ($self->{post_add_missing_timestamp_headers}) {
         $self->{missing_timestamp_headers} ||= {};
@@ -227,7 +239,7 @@ sub entries
     }
   }
 
-  return ($self->_map_canonical_mtimes($posts), $updates);
+  return ($self->_map_canonical_timestamps($posts), $updates);
 }
 
 # Save index data if we've made any updates
@@ -254,16 +266,25 @@ sub end {
   # If post_add_missing_timestamp_headers option is set, update posts missing timestamps
   if ($self->{post_add_missing_timestamp_headers} && $self->{missing_timestamp_headers}) {
     for my $file (keys %{ $self->{missing_timestamp_headers} }) {
-      print "++ updating post $file with timestamp header\n" if $self->options->{verbose} >= 2;
+      print "++ updating post $file with timestamp header\n"
+        if $self->options->{verbose} >= 2;
 
       my $create_mtime = $self->{posts}->{$file}->{create_mtime};
       if (! $create_mtime) {
         warn "Cannot find create_mtime for post $file - skipping add of missing timestamp header\n";
         next;
       }
-      my $timestamp = localtime($create_mtime)->strftime($self->{post_timestamp_format});
+      my $modify_mtime = $self->{posts}->{$file}->{current_mtime};
+      if (! $modify_mtime) {
+        warn "Cannot find current_mtime for post $file - skipping add of missing timestamp header\n";
+        next;
+      }
+
       my $post = Statik::PostMutator->new(file => $file, encoding => $self->config->{blog_encoding});
-      $post->add_header($self->{post_timestamp_header} => $timestamp);
+      my $create_ts = localtime($create_mtime)->strftime($self->{post_timestamp_format});
+      my $modify_ts = localtime($modify_mtime)->strftime($self->{post_timestamp_format});
+      $post->add_header($self->{post_created_timestamp_header} => $create_ts);
+      $post->add_header($self->{post_modified_timestamp_header} => $modify_ts);
       $post->write;
     }
   }
@@ -294,9 +315,12 @@ To configure, add a section like the following to your statik.conf file
     #posts_flag_file                        =
 
     # Post header to check for timestamp, overriding mtime if set
-    #post_timestamp_header                  = Date
+    #post_created_timestamp_header          = Date
 
-    # Post timestamp strptime(1) format (required if post_timestamp_header is set)
+    # Post header to check for timestamp, overriding mtime if set
+    #post_modified_timestamp_header         = DateModified
+
+    # Post timestamp strptime(1) format (required if post_created_timestamp_header is set)
     #post_timestamp_format                  = %Y-%m-%d
 
     # Update posts to add missing timestamp headers (requires write access to posts)
@@ -305,11 +329,11 @@ To configure, add a section like the following to your statik.conf file
 =head1 DESCRIPTION
 
 Statik::Plugin::Entries is a statik plugin for capturing and preserving
-the original creation timestamp on posts, and (if post_timestamp_header
-is set) for extracting header timestamps from posts. It maintains an
-index file (configurable, but 'entries.index' by default) of these
-timestamps for all posts, and returns a file hash with modification
-times from that index.
+the original creation timestamp on posts, and (if
+post_created_timestamp_header is set) for extracting header timestamps
+from posts. It maintains an index file (configurable, but
+'entries.index' by default) of these timestamps for all posts, and
+returns a file hash with modification times from that index.
 
 =head1 BUGS AND LIMITATIONS
 
