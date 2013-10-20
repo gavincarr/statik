@@ -39,7 +39,6 @@ sub post {
      ($self->{markdown_posts_extension_regex} &&
         $stash->{post_extension} =~ /$self->{markdown_posts_extension_regex}/)) {
     $self->_munge_template(template => \$stash->{body}, stash => $stash);
-    $self->_munge_template(template => \$stash->{body_unesc}, stash => $stash);
   }
 }
 

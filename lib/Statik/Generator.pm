@@ -236,6 +236,7 @@ sub _generate_page {
   # Head hook
   my $head_tmpl = $template_sub->( chunk => 'head', flavour => $flavour, theme => $theme );
   $self->{plugins}->call_all( 'head', template => \$head_tmpl, stash => $stash );
+  $stash->xml_escape_text;
   $output .= $interpolate_sub->( template => $head_tmpl, stash => $stash );
 
   # Process posts
@@ -257,6 +258,7 @@ sub _generate_page {
   # Foot hook
   my $foot_tmpl = $template_sub->( chunk => 'foot', flavour => $flavour, theme => $theme );
   $self->{plugins}->call_all( 'foot', template => \$foot_tmpl, stash => $stash );
+  $stash->xml_escape_text;
   $output .= $interpolate_sub->( template => $foot_tmpl, stash => $stash );
 
   return $output if $output;
@@ -286,8 +288,8 @@ sub _generate_post {
   # Fetch parsed post
   my $post = $self->{posts}->fetch(path => $post_fullpath);
 
-  # Update stash with post data (note there are also X_unesc versions of
-  # these if flavour.xml_escape is set e.g. for atom)
+  # Update stash with post data (note there are also xml-escaped versions of
+  # these called X_esc if flavour.xml_escape is set e.g. for atom)
   # post_fullpath is the absolute path to the text post file, including file_extension
   # post_path is the post_fullpath path relative to post_dir, and without the filename
   # post_filename is the post_fullpath basename without the file_extension
@@ -322,6 +324,7 @@ sub _generate_post {
   if ($stash->{post_created_date} ne $current_date) {
     my $date_tmpl = $template_sub->( chunk => 'date', flavour => $flavour, theme => $theme );
     $self->{plugins}->call_all( 'date', template => \$date_tmpl, stash => $stash );
+    $stash->xml_escape_text;
     $date_output = $self->{interpolate_sub}->( template => $date_tmpl, stash => $stash );
     $stash->set(date_break => 1);
   }
@@ -332,6 +335,7 @@ sub _generate_post {
   # Post hook
   my $post_tmpl = $template_sub->( chunk => 'post', flavour => $flavour, theme => $theme );
   $self->{plugins}->call_all( 'post', template => \$post_tmpl, stash => $stash );
+  $stash->xml_escape_text;
   my $post_output = $self->{interpolate_sub}->( template => $post_tmpl, stash => $stash );
 
   return ($date_output, $post_output, $stash->{post_created_date});

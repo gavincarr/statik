@@ -4,8 +4,8 @@ use strict;
 use Carp;
 use Statik::Util qw(clean_path);
 
-# In xml_escape mode, we escape the fields here, and any set via 'set'
-my @escape_fields = qw(blog_title blog_description url);
+# In xml_escape mode, add escaped versions of these fields (plus any set via 'set')
+my @escape_fields = qw(blog_title feed_title blog_description url);
 my %escape = (
   q(<) => '&lt;',
   q(>) => '&gt;',
@@ -34,10 +34,6 @@ sub new {
   my %stash = $config->to_stash;
   @$self{ keys %stash } = values %stash;
 
-  if ($self->{_xml_escape}) {
-    $self->set($_ => $self->{$_}) foreach @escape_fields;
-  }
-
   $self;
 }
 
@@ -47,23 +43,15 @@ sub get {
   $self->{key};
 }
 
-# Set the value for $key to $value. If xml escaping is turned on, $value
-# is xml-escaped, and an additional key "${key}_unesc" is set to the 
-# original unescaped value.
+# Set the value for $key to $value. If xml escaping is turned on, we also
+# add a "${key}_esc" version with xml-escaped content
 sub set {
   my ($self, $key, $value) = @_;
-  if ($self->{_xml_escape} && defined $value) {
-    $self->{"${key}_unesc"} = $value;
-    $value =~ s/($escape_re)/$escape{$1}/g;
-    $self->{$key} = $value;
-  }
-  else {
-    $self->{$key} = $value;
-    $self->{"${key}_unesc"} = $value;
-  }
+  $self->{$key} = $value;
+  return $value;
 }
 
-# Set the value of $key to $value (runs clean_path on value, no unescaping)
+# Set the value of $key to $value (runs clean_path on value, no escaping)
 sub set_as_path {
   my ($self, $key, $value) = @_;
   $self->{$key} = clean_path($value);
@@ -127,6 +115,27 @@ sub delete_all {
     delete $self->{$_} if m/$pattern/;
   }
   return $self;
+}
+
+# Return an xml-escaped version of the given string
+sub _xml_escape_string {
+  my ($self, $str) = @_;
+  return $str if ! defined $str;
+  $str =~ s/($escape_re)/$escape{$1}/g;
+  return $str;
+}
+
+# xml-escape all text fields, adding as additional ${key}_esc entries
+sub xml_escape_text {
+  my $self = shift;
+  return if ! $self->{_xml_escape};
+
+  while (my ($key, $value) = each %$self) {
+    next if $key =~ m/^_/;
+    next if $key =~ m/_esc$/;
+    next if $value =~ m/^\d+$/;
+    $self->{"${key}_esc"} = $self->_xml_escape_string($value);
+  }
 }
 
 1;
@@ -273,9 +282,7 @@ B<header_date>, etc.
 
 =item body
 
-A string holding the current post body (xml-escaped as usual, if the xml-escape
-flag is set for the current flavour. body_unesc also exists as usual, if you
-want the raw unescaped version).
+A string holding the current post body. 
 
 =item date_break
 
@@ -292,20 +299,18 @@ output.
 
 =item set(variable => value)
 
-set is used to add new variables to the stash. If the flavour associated
-with the stash has its B<xml_escape> flag set, then the value added to
-the stash will be the xml-escaped version of the input parameter, and a
-second variable called ${variable}_unesc is also added containing the
-original unescaped version.
+set is used to add new variables to the stash.
 
-If the flavour's xml_escape flag is not set, $variable and ${variable}_unesc
-keys are both still added to the stash, but their values will be identical.
+If the flavour associated with the stash has its B<xml_escape> flag set,
+then set() also adds an xml-escaped version of the value as ${variable}_esc.
+So for atom flavours, for instance, set(body => $body) would set both
+body and body_esc entries in the stash, both of which are then available in
+templates.
 
 =item set_as_path(variable => value)
 
 set_as_path is a setter for paths - runs L<Statik::Util::clean_path> on
-value (removing leading '/' characters, and adding a trailing '/'), and
-skips unescaping.
+value (removing leading '/' characters, and adding a trailing '/').
 
 =item set_as_date(variable => value)
 
@@ -388,7 +393,7 @@ Gavin Carr <gavin@openfusion.com.au>
 
 =head1 COPYRIGHT AND LICENCE
 
-Copyright (C) Gavin Carr 2011.
+Copyright (C) Gavin Carr 2011-2013.
 
 This library is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself, either Perl version 5.8.0 or, at
