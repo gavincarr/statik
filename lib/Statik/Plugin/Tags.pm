@@ -45,8 +45,8 @@ sub start {
   }
 
   $self->{cache} ||= {
-    # map from full_path => { mtime => $mtime, tags => $tag_string }
-    entries_map => {},
+    # map from full_path => $tag_string }
+    entries_tags => {},
     # map from tag => { %hash_keyed_by_full_path },
     tag_map => {},
     # map from tag => $tag_count,
@@ -80,14 +80,14 @@ sub paths {
     # Load the post at $path
     my $post = $posts->fetch(path => $path);
     my $tag_header = $post->header($self->{tag_header}) or next;
-    my $new_post = not exists $cache->{entries_map}->{$path};
-    my @old_tags = sort uniq split /\s*,\s*/, $cache->{entries_map}->{$path}->{tags} if ! $new_post;
+    my $new_post = not exists $cache->{entries_tags}->{$path};
+    my @old_tags = sort uniq split /\s*,\s*/, $cache->{entries_tags}->{$path}->{tags} if ! $new_post;
     my @new_tags = sort uniq split /\s*,\s*/, $tag_header;
     next unless @new_tags or @old_tags;
     (my $rel_path = $path) =~ s!^ $config->{post_dir} /!!x
       if $self->options->{verbose};
 
-    $cache->{entries_map}->{$path} = { mtime => $entries_map->{$path}, tags => $tag_header };
+    $cache->{entries_tags}->{$path} = $tag_header;
     if ($new_post) {
       printf "++ %s not in tag cache, adding %d tags\n", $rel_path, scalar @new_tags
         if $self->options->{verbose} && ! $self->options->{force};
@@ -180,9 +180,8 @@ sub get_post_tags {
   my ($self, $post_path) = @_;
 
   $self->_croak("Missing 'post_path' argument") unless $post_path;
-  my $entry = $self->{cache}->{entries_map}->{$post_path} or return [];
-  my $tags = $entry->{tags} or return [];
-  return [ split /\s*,\s*/, $tags ];
+  my $tag_string = $self->{cache}->{entries_tags}->{$post_path} or return [];
+  return [ split /\s*,\s*/, $tag_string ];
 }
 
 # Return the number of posts
