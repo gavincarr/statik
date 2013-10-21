@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
-  <title>My Bløg</title> 
-  <subtitle>Mutterings from the &lt;dungeon&gt;</subtitle> 
-  <link href="http://example.com/testblog/tag/three/"/>
+  <title>My Bløg</title>
+  <subtitle>Mutterings from the &lt;dungeon&gt;</subtitle>
+  <link href="http://example.com/testblog/tags/three/"/>
   <updated>2011-01-03T20:20:20+0000</updated>
   <author>
     <name>Jane Author</name>
-  </author> 
-  <id>tag:example.com,2010:/testblog/tag/three/</id>
+  </author>
+  <id>tag:example.com,2010:/testblog/tags/three/</id>
   <generator uri="https://github.com/gavincarr/statik" version="0.1">Statik</generator>
   <entry>
     <title>Post the third</title>
