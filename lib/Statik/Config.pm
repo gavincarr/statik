@@ -131,12 +131,13 @@ sub _qualify_paths {
 
   # Derive url_path and blog_id_domain, if not set
   if ($self->{url} =~ m/^https?/i) {
+    $self->{url} = clean_path($self->{url});
     my $url = URI->new($self->{url}, 'http');
     $self->{blog_id_domain} ||= $url->host;
-    $self->{url_path} = '/' . clean_path($url->path);
+    $self->{url_path} = clean_path($url->path);
   }
   else {
-    $self->{url} = $self->{url_path} = '/' . clean_path($self->{url});
+    $self->{url} = $self->{url_path} = clean_path($self->{url});
   }
 }
 

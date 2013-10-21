@@ -130,6 +130,7 @@ sub xml_escape_text {
     next if $key =~ m/^_/;
     next if $key =~ m/_esc$/;
     next if ! $value;
+    next if ref $value;
     next if $value =~ m/^\d+$/;
     $self->{"${key}_esc"} = $self->_xml_escape_string($value);
   }
