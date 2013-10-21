@@ -46,8 +46,8 @@ sub generate {
     if (-f File::Spec->catfile($self->{config}->{post_dir}, $path)) {
       $self->generate_post_pages(path_filename => $path);
     }
-    else {
-      $self->generate_index_pages(path => $path, posts => $self->{generate_paths}->{$path});
+    elsif (my $posts = $self->{generate_paths}->{$path}) {
+      $self->generate_index_pages(path => $path, posts => $posts);
     }
   }
 }

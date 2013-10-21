@@ -36,7 +36,7 @@ sub start {
     close $fh;
     $self->{noindex} = { map { $_ => 1 } @noindex };
     print "++ noindex file: " . dump(\@noindex) . "\n"
-      if $self->options->{verbose} >= 2;
+      if $self->options->{verbose} >= 3;
   }
 }
 

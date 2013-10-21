@@ -126,15 +126,15 @@ sub call_first {
 
 # Call all the given hook routines with @args for all plugins
 sub call_all {
-  my ($self, $hook, @args) = @_;
+  my ($self, $hook, %args) = @_;
 
   my @return_values;
   for my $plugin ($self->plugins($hook)) {
     if (defined wantarray) {
-      push @return_values, $plugin->$hook(@args);
+      push @return_values, $plugin->$hook(%args);
     }
     else {
-      $plugin->$hook(@args);
+      $plugin->$hook(%args);
     }
   }
 

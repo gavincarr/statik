@@ -10,4 +10,9 @@ eu fugiat nulla pariatur.
 % }
 Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia
 deserunt mollit anim id est laborum.</p>
+%# This is a comment. Should not appear in output.
+<%doc>
+This is another comment.
+Should also not appear in output.
+</%doc>
 
