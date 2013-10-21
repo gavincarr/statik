@@ -4,8 +4,6 @@ use strict;
 use Carp;
 use Statik::Util qw(clean_path);
 
-# In xml_escape mode, add escaped versions of these fields (plus any set via 'set')
-my @escape_fields = qw(blog_title feed_title blog_description url);
 my %escape = (
   q(<) => '&lt;',
   q(>) => '&gt;',
@@ -29,7 +27,6 @@ sub new {
   # Initialise
   my $fconfig = $config->flavour($self->{flavour});
   $self->{suffix} = $fconfig->{suffix};
-  $self->{_xml_escape} = $fconfig->{xml_escape};
 
   my %stash = $config->to_stash;
   @$self{ keys %stash } = values %stash;
@@ -128,11 +125,11 @@ sub _xml_escape_string {
 # xml-escape all text fields, adding as additional ${key}_esc entries
 sub xml_escape_text {
   my $self = shift;
-  return if ! $self->{_xml_escape};
 
   while (my ($key, $value) = each %$self) {
     next if $key =~ m/^_/;
     next if $key =~ m/_esc$/;
+    next if ! $value;
     next if $value =~ m/^\d+$/;
     $self->{"${key}_esc"} = $self->_xml_escape_string($value);
   }
@@ -301,11 +298,10 @@ output.
 
 set is used to add new variables to the stash.
 
-If the flavour associated with the stash has its B<xml_escape> flag set,
-then set() also adds an xml-escaped version of the value as ${variable}_esc.
+set() also adds an xml-escaped version of the value as ${variable}_esc.
 So for atom flavours, for instance, set(body => $body) would set both
-body and body_esc entries in the stash, both of which are then available in
-templates.
+body and body_esc entries in the stash, both of which are then available
+in templates.
 
 =item set_as_path(variable => value)
 

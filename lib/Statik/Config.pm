@@ -14,15 +14,12 @@ use Statik::Util qw(clean_path);
 
 my @main_required    = qw(url author_name blog_id_year);
 my %main_booleans    = map { $_ => 1 } qw(show_future_entries);
-my %flavour_booleans = map { $_ => 1 } qw(xml_escape);
 my %flavour_defaults = (
   html => {
     theme         => 'default',
-    xml_escape    => 0,
   },
   atom => {
     theme         => 'default',
-    xml_escape    => 1,
   },
 );
 
@@ -164,12 +161,6 @@ sub _clean_flavours {
     $self->{_config}->{$key}->{suffix} ||= $flavour;
 
     my $fconfig = merge($self->{_config}->{$key}, $flavour_defaults{$flavour});
-
-    # Convert booleans
-    for (keys %flavour_booleans) {
-      $fconfig->{$_} = 1, next if $fconfig->{$_} =~ m/^(yes|on)/;
-      $fconfig->{$_} = 0, next if $fconfig->{$_} =~ m/^(no|off)/;
-    }
 
     if ($fconfig->{posts_per_page} and $fconfig->{max_posts} and
         $fconfig->{posts_per_page} * $fconfig->{max_posts} > $max_posts) {
