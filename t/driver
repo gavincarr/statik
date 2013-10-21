@@ -26,16 +26,13 @@ remove(\1, "$test_dir/static/*");
 remove(\1, "$test_dir/state/*") if -d "$test_dir/state" and ! -f "$test_dir/state/KEEP_STATE";
 check_timestamps("$test_dir/posts");
 
-dir_only_contains_ok("$test_dir/static", [ qw(.gitignore) ], "$test_base/static is empty");
-dir_only_contains_ok("$test_dir/state",  [ qw(.gitignore) ], "$test_base/state is empty") if -d "$test_dir/state";
+dir_only_contains_ok("$test_dir/static", [], "$test_base/static is empty");
+dir_only_contains_ok("$test_dir/state",  [], "$test_base/state is empty") if -d "$test_dir/state";
 
 ok($s = Statik->new(config => "$test_dir/config/statik.conf"), "$test_base statik instantiation ok: $s");
 ok($s->generate, 'generate ok');
 
-# Need to fake .gitignore entries in expected, and then remove :-/
-copy("$test_dir/static/.gitignore", "$test_dir/expected/.gitignore");
 compare_dirs_ok("$test_dir/static", "$test_dir/expected", "$test_base static matches expected");
-unlink "$test_dir/expected/.gitignore";
 
 done_testing;
 
