@@ -3,7 +3,7 @@
 # key = value pairs. Don't quote values unless you want the quotes included.
 #
 # Default values are the first entry for each keyword. Subsequent entries are
-# examples.
+# other examples.
 #
 # Settings marked 'required' should all be defined for sane results.
 #
@@ -57,7 +57,7 @@
 # Directory where state files should go
 #state_dir = state
 
-# How many posts to show per page (all flavours, unless overridden per-flavour).
+# How many posts to show on index pages (all flavours, unless overridden per-flavour).
 #posts_per_page = 10
 
 # Maximum number of pages to generate for indexes (all flavours, unless overridden).
@@ -84,8 +84,9 @@
 # Flavours/themes of individual post pages to generate (comma-separated)
 # Flavours are filetype suffixes, and themes are subdirectories of base_dir/themes
 # Format is flavour:theme, if theme is omitted it defaults to 'default'
-# (comment out or unset to not generate individual post pages at all)
+# (unset to not generate individual post pages at all)
 #post_flavours = html
+#post_flavours =
 
 
 

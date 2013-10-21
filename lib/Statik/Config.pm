@@ -56,7 +56,7 @@ sub new {
   my $encoding = $self->{_config}->{_}->{blog_encoding} || $self->{blog_encoding};
   for (keys %{$self->{_config}->{_}}) {
     if (defined(my $val = delete $self->{_config}->{_}->{$_})) {
-      $self->{decode($encoding, $_)} = decode($encoding, $val) if $val ne '';
+      $self->{decode($encoding, $_)} = decode($encoding, $val);
     }
   }
   delete $self->{_config}->{_};
