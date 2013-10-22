@@ -95,8 +95,12 @@
 # Where do your themes live? (if relative, 'base_dir' is prefixed)
 #theme_dir = themes
 
-# What's the URL of your themes directory (if relative, 'url' is prefixed)
-#theme_url = themes
+# Where do your public resources live (css, js, images etc.)?
+# (if relative, 'base_dir' is prefixed)
+#public_dir = public
+
+# What's the URL of your public directory (if relative, 'url' is prefixed)
+#public_url = public
 
 
 

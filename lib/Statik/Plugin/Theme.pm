@@ -17,10 +17,13 @@ use parent qw(Statik::Plugin);
 
 sub defaults {
   return {
-    # Where do your themes live? (if relative, 'base_dir' is prefixed)
+    # In what directory are your themes? (if relative, 'base_dir' is prefixed)
     theme_dir               => 'themes',
-    # What's the URL of your themes directory (if relative, 'url' is prefixed)
-    theme_url               => 'themes',
+    # In what directory are your public resources (css, js, images, etc.)
+    # (if relative, 'base_dir' is prefixed)
+    public_dir              => 'public',
+    # What's the URL of your public directory (if relative, 'url' is prefixed)
+    public_url              => 'public',
   };
 }
 
@@ -34,8 +37,10 @@ sub start {
   # Qualify config items if required
   $self->{theme_dir} = "$config->{base_dir}/$self->{theme_dir}"
     if substr($self->{theme_dir},0,1) ne '/';
-  $self->{theme_url} = "$config->{url}$self->{theme_url}"
-    if substr($self->{theme_url},0,1) ne '/';
+  $self->{public_dir} = "$config->{base_dir}/$self->{public_dir}"
+    if substr($self->{public_dir},0,1) ne '/';
+  $self->{public_url} = "$config->{url}$self->{public_url}"
+    if substr($self->{public_url},0,1) ne '/';
 }
 
 # Template hook - return a subroutine that takes named 'flavour', 'theme' and 
@@ -96,7 +101,8 @@ sub template {
 sub head {
   my ($self, %arg) = @_;
   $arg{stash}->set_as_path(theme_dir    => $self->{theme_dir});
-  $arg{stash}->set_as_path(theme_url    => $self->{theme_url});
+  $arg{stash}->set_as_path(public_dir   => $self->{public_dir});
+  $arg{stash}->set_as_path(public_url   => $self->{public_url});
 }
 
 1;
@@ -114,10 +120,13 @@ To configure, add a section like the following to your statik.conf file
 (defaults shown):
 
     [Statik::Plugin::Theme]
-    # Where do your themes live? (if relative, 'base_dir' is prefixed)
+    # In what directory are your themes? (if relative, 'base_dir' is prefixed)
     theme_dir = themes
-    # What's the URL of your themes directory (if relative, 'url' is prefixed)
-    theme_url = themes
+    # In what directory are your public resources (css, js, images, etc.)
+    # (if relative, 'base_dir' is prefixed)
+    public_dir = public
+    # What's the URL of your public directory (if relative, 'url' is prefixed)
+    public_url = public
 
 
 =head1 DESCRIPTION
@@ -142,7 +151,7 @@ Gavin Carr <gavin@openfusion.com.au>, http://www.openfusion.net/
 
 =head1 LICENCE
 
-Copyright 2011, Gavin Carr.
+Copyright 2011-2013, Gavin Carr.
 
 This plugin is licensed under the terms of the GNU General Public Licence,
 v3, or at your option, any later version.
