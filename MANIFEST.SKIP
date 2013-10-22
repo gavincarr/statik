@@ -13,3 +13,4 @@
 ^Build$
 ^Build.bat$
 ^MANIFEST.bak$
+^generated$
