@@ -1,0 +1,48 @@
+<!-- statik head -->
+<!DOCTYPE html>
+<!-- simple html5 layout -->
+<html lang="$blog_language">
+<head>
+<meta charset="$blog_encoding" />
+<title>$blog_title</title>
+<link rel="stylesheet" href="$url/theme/style.css" type="text/css" />
+<link rel="alternate" type="application/atom+xml" title="$blog_title feed" href="$url/index.atom" />
+<!-- workaround older IE bogosities with unknown elements -->
+<!--[if lt IE 9]>
+<script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+<![endif]-->
+</head>
+<body>
+<header>
+<hgroup>
+<h1>$blog_title</h1>
+<h2>$blog_description</h2>
+</hgroup>
+</header>
+<nav>
+Page $page_num of $page_total.
+</nav>
+
+
+<!-- statik post -->
+
+<article>
+<header>
+<h1><a href="$url$post_path$post_filename" rel="bookmark" title="link to this post">$header_title, by $header_author</a></h1>
+<time datetime="$header_date" pubdate>$header_date</time>
+</header>
+<ul>
+<li>ISBN: $header_isbn</li>
+</ul>
+$body
+</article>
+
+
+<!-- statik foot -->
+
+<footer>
+Copyright 2011 $author_name.
+</footer>
+
+</body>
+</html>

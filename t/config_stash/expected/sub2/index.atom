@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>My Bløg</title>
+  <subtitle></subtitle>
+  <link href="/sub2/"/>
+  <updated>2011-01-05T10:03:00+0000</updated>
+  <author>
+    <name>Jane Author</name>
+  </author>
+  <id>tag:example.com,2011:/sub2/</id>
+  <generator uri="https://github.com/gavincarr/statik" version="0.1">Statik</generator>
+  <entry>
+    <title>Post the fifth</title>
+    <link href="/sub2/fifth"/>
+    <id>tag:example.com,2011-01-05:/sub2/fifth</id>
+    <updated>2011-01-05T10:03:00+0000</updated>
+  </entry>
+</feed>

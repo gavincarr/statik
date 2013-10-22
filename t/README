@@ -1,0 +1,26 @@
+
+Adding new driver tests
+-----------------------
+
+How to add a new test using the standard test driver:
+
+TESTNAME=stash
+TESTNUM=03
+
+# Create a test symlink to driver named ${TESTNUM}_${TESTNAME}.t
+ln -s driver ${TESTNUM}_${TESTNAME}.t
+
+# Create a named test data tree 
+mkdir -p $TESTNAME/{config,expected,posts,static,themes}
+
+# Copy some initial configs and data
+cp -v  smoketest/config/* $TESTNAME/config
+cp -rv  smoketest/expected/* $TESTNAME/expected
+cp -rv smoketest/posts/* $TESTNAME/posts
+cp -rv ../themes/default $TESTNAME/themes
+
+# Run an initial test
+t ${TESTNUM}_${TESTNAME}.t
+
+# Edit and adjust as required
+

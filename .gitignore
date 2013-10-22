@@ -12,4 +12,4 @@ MANIFEST.bak
 MYMETA.*
 DevNotes
 t/*/static/*
-t/tags/state/*
+t/*/state/*

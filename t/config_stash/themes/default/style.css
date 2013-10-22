@@ -1,0 +1,20 @@
+body {
+  font: 13px/1.231 arial,helvetica,clean,sans-serif;
+}
+article,aside,details,figcaption,figure,footer,header,hgroup,menu,nav,section {
+  display:block;
+}
+article h1 {
+  font-size: 18px;
+  margin-bottom: 0px;
+}
+article h1 a {
+  text-decoration: none;
+}
+article h1 a:hover {
+  text-decoration: underline;
+}
+time {
+  font-size: 90%;
+  color: #666;
+}
