@@ -9,6 +9,7 @@ use File::Path qw(make_path);
 use Time::Piece;
 
 use Statik::Stash;
+use Statik::Util qw(clean_path);
 
 sub new {
   my ($class, %arg) = @_;
@@ -297,6 +298,7 @@ sub _generate_post {
   die "Post file '$post_fullpath' has unexpected format - aborting" 
     unless $post_fullpath && $post_path;
   $post_path =~ s!^$self->{config}->{post_dir}/!!;
+  $post_path = clean_path($post_path);
   my $post_extension;
   if ($post_filename =~ m/^(.*)\.([^.]+)$/) {
     $post_filename = $1;

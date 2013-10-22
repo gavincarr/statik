@@ -1,6 +1,6 @@
 <entry>
 <title>$header_title</title>
-<link rel="alternate" type="text/html" href="$url/$post_path/$post_filename"/>
+<link rel="alternate" type="text/html" href="$url$post_path$post_filename"/>
 <id>$atom_entry_id</id>
 <updated>$post_updated_iso8601</updated>
 <author>

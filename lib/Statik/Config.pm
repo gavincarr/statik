@@ -12,7 +12,7 @@ use URI;
 
 use Statik::Util qw(clean_path);
 
-my @main_required    = qw(url author_name blog_id_year);
+my @main_required    = qw(blog_title author_name blog_id_year);
 my %main_booleans    = map { $_ => 1 } qw(show_future_entries);
 my %flavour_defaults = (
   html => {
@@ -78,6 +78,12 @@ sub _check_required {
     die "Required config item '$_' is not defined - please set and try again\n"
       if ! defined $self->{$_} || $self->{$_} eq '';
   }
+
+  # blog_id_domain is required, unless we can derive it from url
+  if ((! defined $self->{blog_id_domain} || $self->{blog_id_domain} eq '') &&
+      (! defined $self->{url} || $self->{url} !~ m!^https?://!i)) {
+    die "Required config item 'blog_id_domain' is not defined - please set and try again\n"
+  }
 }
 
 # Remove quotes from top- and second-level values
@@ -130,14 +136,14 @@ sub _qualify_paths {
   }
 
   # Derive url_path and blog_id_domain, if not set
-  if ($self->{url} =~ m/^https?/i) {
-    $self->{url} = clean_path($self->{url});
+  if ($self->{url} && $self->{url} =~ m/^https?/i) {
     my $url = URI->new($self->{url}, 'http');
+    $self->{url} = clean_path($url, first => 1);
     $self->{blog_id_domain} ||= $url->host;
-    $self->{url_path} = clean_path($url->path);
+    $self->{url_path} = clean_path($url->path, first => 1);
   }
   else {
-    $self->{url} = $self->{url_path} = clean_path($self->{url});
+    $self->{url} = $self->{url_path} = clean_path($self->{url}, first => 1);
   }
 }
 

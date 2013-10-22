@@ -45,7 +45,7 @@
 #url = /blog
 #url = http://example.com/blog
 
-# Base directory for this blog (required, used to qualify relative directories/files)
+# Base directory for this blog (used to qualify relative directories/files)
 #base_dir =
 
 # Directory where blog post files are found

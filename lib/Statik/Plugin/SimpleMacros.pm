@@ -11,6 +11,9 @@ use File::Spec;
 use YAML qw(LoadFile);
 use Data::Dump qw(dd pp dump);
 
+# Uncomment next line to enable ### line debug output
+#use Smart::Comments
+
 # -------------------------------------------------------------------------
 # Configuration defaults. To change, add a [Statik::Plugin::SimpleMacros]
 # section to your statik.conf config, and update as key = value entries.
@@ -30,8 +33,7 @@ sub start {
   $self->{macros} = [];
   if (my $dir = $self->{macro_directory}) {
     $dir = File::Spec->rel2abs($dir, $self->config->{base_dir});
-    print "++ SimpleMacros dir: $dir\n"
-      if $self->options->{verbose} >= 2;
+    ### SimpleMacros dir: $dir
     if (-d $dir) {
       for my $file (sort glob "$dir/*.yml") {
         my $macros = LoadFile($file);
@@ -39,8 +41,7 @@ sub start {
       }
     }
   }
-  print "++ SimpleMacros: " . dump($self->{macros}) . "\n"
-    if $self->options->{verbose} >= 2;
+  ### SimpleMacros macros: dump($self->{macros})
 }
 
 # Munge posts
