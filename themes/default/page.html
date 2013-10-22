@@ -4,9 +4,9 @@
 <html lang="$blog_language">
 <head>
 <meta charset="$blog_encoding" />
-<title>$blog_title</title>
-<link rel="stylesheet" href="$url/theme/style.css" type="text/css" />
-<link rel="alternate" type="application/atom+xml" title="$blog_title feed" href="$url/index.atom" />
+<title>$blog_title_esc</title>
+<link rel="alternate" type="application/atom+xml" title="$blog_title_esc feed" href="${url}index.atom" />
+<link rel="stylesheet" href="{$public_url}css/main.css" type="text/css" />
 <!-- workaround older IE bogosities with unknown elements -->
 <!--[if lt IE 9]>
 <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -15,8 +15,8 @@
 <body>
 <header>
 <hgroup>
-<h1>$blog_title</h1>
-<h2>$blog_description</h2>
+<h1>$blog_title_esc</h1>
+<h2>$blog_description_esc</h2>
 </hgroup>
 </header>
 <nav>
@@ -28,20 +28,20 @@ Page $page_num of $page_total.
 
 <article>
 <header>
-<h1><a href="$url/$post_path/$post_filename" rel="bookmark" title="link to this post">$header_title, by $header_author</a></h1>
+<h1><a href="$url$post_path$post_filename" rel="bookmark" title="link to this post">$header_title_esc</a></h1>
 <time datetime="$header_date" pubdate>$header_date</time>
 </header>
-<ul>
-<li>ISBN: $header_isbn</li>
-</ul>
-$body
+<!-- Requires PostTags plugin
+<p class="tags">Tags: $post_tag_links</p>
+-->
+$body_esc
 </article>
 
 
 <!-- statik foot -->
 
 <footer>
-Copyright 2011 $author_name.
+Copyright $blog_id_year $author_name.
 </footer>
 
 </body>
