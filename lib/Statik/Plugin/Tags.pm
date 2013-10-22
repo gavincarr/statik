@@ -19,7 +19,7 @@ use List::MoreUtils qw(uniq);
 
 sub defaults {
   return {
-    # Directory (in static_dir) to use as root for our tag indexes
+    # Directory (in output_dir) to use as root for our tag indexes
     tag_root                => 'tags',
     # Header in which to look for our comma-separated list of tags
     tag_header              => 'Tags',
@@ -211,7 +211,7 @@ To configure, add a section like the following to your statik.conf file
 (defaults shown):
 
     [Statik::Plugin::Tags]
-    # Directory (in static_dir) to use as root for our tag indexes
+    # Directory (in output_dir) to use as root for our tag indexes
     tag_root = tags
     # Header in which to look for our comma-separated list of tags
     tag_header = Tags
@@ -229,10 +229,10 @@ order).
 Tag index pages are located in a separate tree in the static directory, using
 the following naming convention:
 
-  $static_dir/$tag_root/$tag/index.$flavour
+  $output_dir/$tag_root/$tag/index.$flavour
 
 tag_root defaults to 'tags', so posts tagged 'statik' would be in
-$static_dir/tags/statik/index.$flavour, which would typically map to a
+$output_dir/tags/statik/index.$flavour, which would typically map to a
 /tags/statik/ URL path.
 
 =head1 METHODS

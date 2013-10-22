@@ -72,7 +72,7 @@ sub generate_post_pages {
     my $theme = $fconfig->{theme} || 'default';
     my $path = dirname $path_filename;
     my $post_fullpath = "$config->{post_dir}/$path_filename";
-    my $output_fullpath = "$config->{static_dir}/$path_filename";
+    my $output_fullpath = "$config->{output_dir}/$path_filename";
     $output_fullpath =~ s/\.$config->{file_extension}$/.$suffix/;
 
     print "+ Generating $flavour post page for '$path_filename'\n"
@@ -108,8 +108,8 @@ sub generate_index_pages {
   }
 
   my $config = $self->{config};
-  mkdir "$config->{static_dir}/$path", 0755
-    unless -d "$config->{static_dir}/$path" || $self->{options}->{noop};
+  mkdir "$config->{output_dir}/$path", 0755
+    unless -d "$config->{output_dir}/$path" || $self->{options}->{noop};
 
   for my $flavour (@{$config->{index_flavours}}) {
     # Get theme, posts_per_page and max_pages settings
@@ -189,15 +189,15 @@ sub _remove_all_index_pages {
   for my $flavour (@{$config->{index_flavours}}) {
     my $fconfig = $config->flavour($flavour);
     my $suffix = $fconfig->{suffix} || $flavour;
-    for (glob "$config->{static_dir}/$path/index*.$suffix") {
+    for (glob "$config->{output_dir}/$path/index*.$suffix") {
       print "+ Removing obsolete $_\n" if $self->{options}->{verbose};
       unlink $_;
     }
   }
 
   # Remove directory if empty
-  if (! glob "$config->{static_dir}/$path/*") {
-    rmdir "$config->{static_dir}/$path";
+  if (! glob "$config->{output_dir}/$path/*") {
+    rmdir "$config->{output_dir}/$path";
   }
 }
 
@@ -351,7 +351,7 @@ sub _output {
   my $path = delete $arg{path};
 
   $fullpath ||= File::Spec->catfile(
-    $self->{config}->{static_dir},
+    $self->{config}->{output_dir},
     $path ? $path : (),
     $self->_generate_filename(%arg)
   );

@@ -52,7 +52,7 @@
 #post_dir = posts
 
 # Directory where static output files should go
-#static_dir = static
+#output_dir = static
 
 # Directory where state files should go
 #state_dir = state

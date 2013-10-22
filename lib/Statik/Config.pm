@@ -34,7 +34,7 @@ sub new {
     blog_language           => 'en',
     blog_encoding           => 'utf-8',
     post_dir                => 'posts',
-    static_dir              => 'static',
+    output_dir              => 'static',
     state_dir               => 'state',
     posts_per_page          => 10,
     max_pages               => 1,
