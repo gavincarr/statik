@@ -11,17 +11,6 @@
 # made absolute using base_dir.
 #
 
-# Blog title (required)
-#blog_title =
-#blog_title = My Bløg
-
-# Blog feed title (defaults to blog_title)
-#feed_title =
-
-# Blog description (for feeds etc.)
-#blog_description =
-#blog_description = Mutterings from the <dungeon>
-
 # Blog author's name (required, used in atom feeds)
 #author_name =
 #author_name = Jane Author
@@ -33,6 +22,17 @@
 # Domain to use as part of your atom feed unique id, and must not change (required)
 #blog_id_domain =
 #blog_id_domain = openfusion.com.au
+
+# Blog title (required)
+#blog_title =
+#blog_title = My Bløg
+
+# Blog feed title (defaults to blog_title)
+#feed_title =
+
+# Blog description (for feeds etc.)
+#blog_description =
+#blog_description = Mutterings from the <dungeon>
 
 # Primary blog language
 #blog_language = en
