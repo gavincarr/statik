@@ -65,13 +65,21 @@ sub generate_post_pages {
   die "Path does not end in .$config->{file_extension}"
     unless $path_filename =~ m/\.$config->{file_extension}$/o;
 
+  my $path = dirname $path_filename;
+  my $post_fullpath = "$config->{post_dir}/$path_filename";
+
+  # Allow posts to override post-page flavours with a Flavours header
+  my @post_flavours = @{$config->{post_flavours}};
+  my $post = $self->{posts}->fetch(path => $post_fullpath);
+  if (my $flavours = $post->headers->{flavours}) {
+    @post_flavours = split /\s*,\s*/, $flavours;
+  }
+
   # Iterate over flavours
-  for my $flavour (@{$config->{post_flavours}}) {
+  for my $flavour (@post_flavours) {
     my $fconfig = $config->flavour($flavour);
     my $suffix = $fconfig->{suffix} || $flavour;
     my $theme = $fconfig->{theme} || 'default';
-    my $path = dirname $path_filename;
-    my $post_fullpath = "$config->{post_dir}/$path_filename";
     my $output_fullpath = "$config->{output_dir}/$path_filename";
     $output_fullpath =~ s/\.$config->{file_extension}$/.$suffix/;
 
@@ -201,16 +209,18 @@ sub _remove_all_index_pages {
   }
 }
 
-# Generate the output for a given page
+# Generate a complete page for the given theme/flavour.
+# Pages may be composite/index pages, containing multiple posts,
+# or post pages, containing just a single post.
 sub _generate_page {
   my ($self, %arg) = @_;
 
   # Check arguments
-  my $flavour = delete $arg{flavour} 
-    or die "Required argument 'flavour' missing";
   my $theme = delete $arg{theme}
     or die "Required argument 'theme' missing";
-  my $suffix = delete $arg{suffix} 
+  my $flavour = delete $arg{flavour}
+    or die "Required argument 'flavour' missing";
+  my $suffix = delete $arg{suffix}
     or die "Required argument 'suffix' missing";
   my $post_fullpaths = delete $arg{post_fullpaths}
     or die "Required argument 'post_fullpaths' missing";
