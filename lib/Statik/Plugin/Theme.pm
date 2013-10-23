@@ -63,7 +63,8 @@ sub template {
       if $self->{cache}->{$flavour};
 
     # Parse all chunks from theme flavour page
-    my $page = "$self->{theme_dir}/$theme/page.$flavour";
+#   my $page = "$self->{theme_dir}/$theme/page.$flavour";
+    my $page = "$self->{theme_dir}/$theme.$flavour";
     die "[Plugin::Theme] cannot find '$flavour' template for '$theme' theme in $self->{theme_dir}\n"
       unless -r $page;
 #   return '' unless -r $page;
@@ -132,18 +133,20 @@ To configure, add a section like the following to your statik.conf file
 =head1 DESCRIPTION
 
 Statik::Plugin::Theme is the default statik template plugin, returning
-template chunks from theme pages.
+template chunks from theme flavour pages.
 
-A theme is a directory named for your theme (e.g. "mark1") in your theme_dir,
-that contains one or more template files named page.$flavour (e.g. page.html,
-page.atom, etc.), and any supporting stylesheets, javascript, or images 
-associated with your theme (organised however you like).
+Flavour pages are files that exist in your theme directory (theme_dir,
+default 'themes'), with names of the form $theme.$flavour (e.g. 'default.html',
+'default.atom'). Flavours are specified in the 'index_flavours' and
+'post_flavours' entries in 'statik.conf'. The default values are:
 
-The default statik theme, for instance, looks like this:
+=over 4
 
-  themes
-  └── default
-      └── page.html
+=item index_flavours = default.html,default.atom
+
+=item post_flavours = default.html
+
+=back
 
 =head1 AUTHOR
 
