@@ -56,7 +56,7 @@ sub template {
     my $flavour = $args{flavour} || 
       die "[Plugin::Theme] missing 'flavour' argument to template()";
     my $theme = $args{theme} || 'default';
-    $theme = 'default' unless -d "$self->{theme_dir}/$theme";
+#   $theme = 'default' unless -d "$self->{theme_dir}/$theme";
 
     # Return cached chunk if available
     return $self->{cache}->{$flavour}->{$chunk} || ''
