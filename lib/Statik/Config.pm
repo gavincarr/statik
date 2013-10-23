@@ -42,8 +42,8 @@ sub new {
     file_extension          => 'txt',
     show_future_entries     => 0,
     plugin_list             => 'config/plugins.conf',
-    index_flavours          => 'html,atom',
-    post_flavours           => 'html',
+    index_flavours          => 'default.html,default.atom',
+    post_flavours           => 'default.html',
   }, $class;
   $self->{_file} = realpath($self->{_file});
 

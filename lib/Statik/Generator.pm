@@ -17,7 +17,7 @@ sub new {
 
   # Check required arguments
   for (qw(config options posts plugins entries_map entries_list generate_paths noindex)) {
-    $self->{$_} = delete $arg{$_} 
+    $self->{$_} = delete $arg{$_}
       or croak "Required argument '$_' missing";
   }
   croak "Invalid arguments: " . join(',', sort keys %arg) if %arg;
@@ -58,7 +58,7 @@ sub generate_post_pages {
   my ($self, %arg) = @_;
 
   # Check arguments
-  my $path_filename = delete $arg{path_filename} 
+  my $path_filename = delete $arg{path_filename}
     or die "Required argument 'path_filename' missing";
 
   my $config = $self->{config};
@@ -76,11 +76,14 @@ sub generate_post_pages {
   }
 
   # Iterate over flavours
+  my $theme;
   for my $flavour (@post_flavours) {
+    ($theme, $flavour) = $self->_split_flavour($flavour);
 #   my $fconfig = $config->flavour($flavour);
+#   my $suffix = $fconfig->{suffix} || $flavour;
+#   my $theme = $fconfig->{theme} || 'default';
     my $fconfig = {};
-    my $suffix = $fconfig->{suffix} || $flavour;
-    my $theme = $fconfig->{theme} || 'default';
+    my $suffix = $flavour;
     my $output_fullpath = "$config->{output_dir}/$path_filename";
     $output_fullpath =~ s/\.$config->{file_extension}$/.$suffix/;
 
@@ -120,16 +123,21 @@ sub generate_index_pages {
   mkdir "$config->{output_dir}/$path", 0755
     unless -d "$config->{output_dir}/$path" || $self->{options}->{noop};
 
+  my $theme;
   for my $flavour (@{$config->{index_flavours}}) {
     # Get theme, posts_per_page and max_pages settings
 #   my $fconfig = $config->flavour($flavour);
+#   my $suffix = $fconfig->{suffix} || $flavour;
+#   my $theme = $fconfig->{theme} || 'default';
+#   my $posts_per_page = $fconfig->{posts_per_page} || $config->{posts_per_page};
+#   my $max_pages = $fconfig->{max_pages};
+#   $max_pages = $config->{max_pages}
+#     unless defined $max_pages && $max_pages ne '';
+    ($theme, $flavour) = $self->_split_flavour($flavour);
     my $fconfig = {};
-    my $suffix = $fconfig->{suffix} || $flavour;
-    my $theme = $fconfig->{theme} || 'default';
-    my $posts_per_page = $fconfig->{posts_per_page} || $config->{posts_per_page};
-    my $max_pages = $fconfig->{max_pages};
-    $max_pages = $config->{max_pages} 
-      unless defined $max_pages && $max_pages ne '';
+    my $suffix = $flavour;
+    my $posts_per_page = $config->{posts_per_page};
+    my $max_pages = $config->{max_pages};
 
     # Group post files into N sets of $posts_per_page posts
     my (@page_files, @page_sets);
@@ -173,7 +181,7 @@ sub generate_index_pages {
         is_index        => 1,
       );
 
-      $self->_output(output => $output, 
+      $self->_output(output => $output,
         path => $path, suffix => $suffix, page_num => $page_num);
 
       @page_files = ();
@@ -189,15 +197,18 @@ sub _remove_all_index_pages {
   my ($self, %arg) = @_;
 
   # Check arguments
-  my $path = delete $arg{path} 
+  my $path = delete $arg{path}
     or die "Required argument 'path' missing";
 
   # Remove all index pages in $path
   my $config = $self->{config};
+  my $theme;
   for my $flavour (@{$config->{index_flavours}}) {
+    ($theme, $flavour) = $self->_split_flavour($flavour);
 #   my $fconfig = $config->flavour($flavour);
+#   my $suffix = $fconfig->{suffix} || $flavour;
     my $fconfig = {};
-    my $suffix = $fconfig->{suffix} || $flavour;
+    my $suffix = $flavour;
     for (glob "$config->{output_dir}/$path/index*.$suffix") {
       print "+ Removing obsolete $_\n" if $self->{options}->{verbose};
       unlink $_;
@@ -285,9 +296,9 @@ sub _generate_post {
   # Check arguments
   my $post_fullpath = delete $arg{post_fullpath}
     or die "Required argument 'post_fullpath' missing";
-  my $flavour = delete $arg{flavour} 
+  my $flavour = delete $arg{flavour}
     or die "Required argument 'flavour' missing";
-  my $theme = delete $arg{theme} 
+  my $theme = delete $arg{theme}
     or die "Required argument 'theme' missing";
   my $stash = delete $arg{stash}
     or die "Required argument 'stash' missing";
@@ -306,7 +317,7 @@ sub _generate_post {
   # post_filename is the post_fullpath basename without the file_extension
   # post_extension is the file extension
   my ($post_filename, $post_path) = fileparse($post_fullpath);
-  die "Post file '$post_fullpath' has unexpected format - aborting" 
+  die "Post file '$post_fullpath' has unexpected format - aborting"
     unless $post_fullpath && $post_path;
   $post_path =~ s!^$self->{config}->{post_dir}/!!;
   $post_path = clean_path($post_path);
@@ -366,12 +377,12 @@ sub _output {
     $path ? $path : (),
     $self->_generate_filename(%arg)
   );
-  
+
   if ($self->{options}->{noop}) {
     print "+ Creating output for $fullpath\n";
     return;
   }
-  
+
   # Check required directories exist
   my $dir = dirname $fullpath;
   -d $dir or make_path($dir, { mode => 0755 });
@@ -398,6 +409,18 @@ sub _generate_filename {
   my $page_num = delete $arg{page_num} || 1;
 
   return sprintf 'index%s.%s', $page_num == 1 ? '' : $page_num, $suffix;
+}
+
+# Split a flavour (e.g. 'default.html', 'default.atom') into theme + suffix components
+sub _split_flavour {
+  my ($self, $flavour) = @_;
+  if ($flavour =~ m/\./) {
+    return split /\./, $flavour, 2;
+  }
+  else {
+    my $theme = 'default';
+    return ($theme, $flavour);
+  }
 }
 
 1;
