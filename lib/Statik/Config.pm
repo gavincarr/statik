@@ -196,11 +196,11 @@ sub to_stash {
 }
 
 # Return flavour config
-sub flavour {
-  my ($self, $flavour) = @_;
-  $self->{_config}->{"flavour:$flavour"} ||= { %{$flavour_defaults{$flavour}} };
-  return $self->{_config}->{"flavour:$flavour"};
-}
+#sub flavour {
+#  my ($self, $flavour) = @_;
+#  $self->{_config}->{"flavour:$flavour"} ||= { %{$flavour_defaults{$flavour}} };
+#  return $self->{_config}->{"flavour:$flavour"};
+#}
 
 # Trivial convert-to-hash
 sub TO_JSON {

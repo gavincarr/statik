@@ -77,7 +77,8 @@ sub generate_post_pages {
 
   # Iterate over flavours
   for my $flavour (@post_flavours) {
-    my $fconfig = $config->flavour($flavour);
+#   my $fconfig = $config->flavour($flavour);
+    my $fconfig = {};
     my $suffix = $fconfig->{suffix} || $flavour;
     my $theme = $fconfig->{theme} || 'default';
     my $output_fullpath = "$config->{output_dir}/$path_filename";
@@ -121,12 +122,11 @@ sub generate_index_pages {
 
   for my $flavour (@{$config->{index_flavours}}) {
     # Get theme, posts_per_page and max_pages settings
-    my $fconfig = $config->flavour($flavour);
+#   my $fconfig = $config->flavour($flavour);
+    my $fconfig = {};
     my $suffix = $fconfig->{suffix} || $flavour;
     my $theme = $fconfig->{theme} || 'default';
-    my $posts_per_page = $fconfig->{posts_per_page};
-    $posts_per_page = $config->{posts_per_page} 
-      unless $posts_per_page;
+    my $posts_per_page = $fconfig->{posts_per_page} || $config->{posts_per_page};
     my $max_pages = $fconfig->{max_pages};
     $max_pages = $config->{max_pages} 
       unless defined $max_pages && $max_pages ne '';
@@ -195,7 +195,8 @@ sub _remove_all_index_pages {
   # Remove all index pages in $path
   my $config = $self->{config};
   for my $flavour (@{$config->{index_flavours}}) {
-    my $fconfig = $config->flavour($flavour);
+#   my $fconfig = $config->flavour($flavour);
+    my $fconfig = {};
     my $suffix = $fconfig->{suffix} || $flavour;
     for (glob "$config->{output_dir}/$path/index*.$suffix") {
       print "+ Removing obsolete $_\n" if $self->{options}->{verbose};

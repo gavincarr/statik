@@ -25,8 +25,9 @@ sub new {
   croak "Invalid arguments: " . join(',', sort keys %arg) if %arg;
 
   # Initialise
-  my $fconfig = $config->flavour($self->{flavour});
-  $self->{suffix} = $fconfig->{suffix};
+# my $fconfig = $config->flavour($self->{flavour});
+# $self->{flavour_suffix} = $fconfig->{suffix};
+  $self->{flavour_suffix} = $self->{flavour};
 
   my %stash = $config->to_stash;
   @$self{ keys %stash } = values %stash;
