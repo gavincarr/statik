@@ -71,7 +71,7 @@ sub generate_post_pages {
   # Allow posts to override post-page flavours with a Flavours header
   my @post_flavours = @{$config->{post_flavours}};
   my $post = $self->{posts}->fetch(path => $post_fullpath);
-  if (my $flavours = $post->headers->{flavours}) {
+  if (my $flavours = $post->headers->{Flavours}) {
     @post_flavours = split /\s*,\s*/, $flavours;
   }
 
@@ -296,10 +296,10 @@ sub _generate_post {
   # Check arguments
   my $post_fullpath = delete $arg{post_fullpath}
     or die "Required argument 'post_fullpath' missing";
-  my $flavour = delete $arg{flavour}
-    or die "Required argument 'flavour' missing";
   my $theme = delete $arg{theme}
     or die "Required argument 'theme' missing";
+  my $flavour = delete $arg{flavour}
+    or die "Required argument 'flavour' missing";
   my $stash = delete $arg{stash}
     or die "Required argument 'stash' missing";
   my $current_date = delete $arg{current_date};
