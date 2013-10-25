@@ -59,8 +59,8 @@ sub template {
 #   $theme = 'default' unless -d "$self->{theme_dir}/$theme";
 
     # Return cached chunk if available
-    return $self->{cache}->{$flavour}->{$chunk} || ''
-      if $self->{cache}->{$flavour};
+    return $self->{cache}->{"$theme.$flavour"}->{$chunk} || ''
+        if $self->{cache}->{"$theme.$flavour"};
 
     # Parse all chunks from theme flavour page
 #   my $page = "$self->{theme_dir}/$theme/page.$flavour";
@@ -73,27 +73,27 @@ sub template {
       while (my $line = <$fh>) {
         if ($line =~ m/<!-- \s* statik \s+ (\w+) (?:\s+(.*)\b)? \s* -->/x) {
           if ($1 && $2) {
-            $self->{cache}->{$flavour}->{$1} = $2;
+            $self->{cache}->{"$theme.$flavour"}->{$1} = $2;
             $current_chunk = '';
           }
           else {
             my $next_chunk = $1;
             # Trim current_chunk trailing whitespace before updating to next
-            $self->{cache}->{$flavour}->{$current_chunk} =~ s/\s+\z/\n/s
+            $self->{cache}->{"$theme.$flavour"}->{$current_chunk} =~ s/\s+\z/\n/s
               if $current_chunk;
             $current_chunk = $next_chunk;
           }
         }
         elsif ($current_chunk) {
-          $self->{cache}->{$flavour}->{$current_chunk} .= $line;
+          $self->{cache}->{"$theme.$flavour"}->{$current_chunk} .= $line;
         }
       }
       # Trim current_chunk trailing whitespace
-      $self->{cache}->{$flavour}->{$current_chunk} =~ s/\s+\z/\n/s
+      $self->{cache}->{"$theme.$flavour"}->{$current_chunk} =~ s/\s+\z/\n/s
         if $current_chunk;
 
       # Return newly-cached $chunk if we found one
-      return $self->{cache}->{$flavour}->{$chunk} || '';
+      return $self->{cache}->{"$theme.$flavour"}->{$chunk} || '';
     }
   };
 }
