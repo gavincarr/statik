@@ -40,10 +40,17 @@
 # Blog text encoding
 #blog_encoding = utf-8
 
-# Base URL for the blog, generally safe to leave just a path
+# Base URL for the blog, generally safe to leave just a path, which lets links work
+# with relative URLs in staging contexts
 #url = /
 #url = /blog
 #url = http://example.com/blog
+
+# Full URL for the blog, only used where relative URLs are not allowed (e.g. in feeds)
+# (required). Should include the url path you used for 'url', if that was relative;
+# should match 'url' if you used a full url there.
+#full_url =
+#full_url = http://example.com/blog
 
 # Base directory for this blog (used to qualify relative directories/files)
 #base_dir =

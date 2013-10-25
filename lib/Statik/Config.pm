@@ -12,7 +12,7 @@ use URI;
 
 use Statik::Util qw(clean_path);
 
-my @main_required    = qw(blog_title author_name blog_id_year);
+my @main_required    = qw(blog_title author_name blog_id_year full_url);
 my %main_booleans    = map { $_ => 1 } qw(show_future_entries);
 my %flavour_defaults = (
   html => {
@@ -145,6 +145,7 @@ sub _qualify_paths {
   else {
     $self->{url} = $self->{url_path} = clean_path($self->{url}, first => 1);
   }
+  $self->{full_url} = clean_path($self->{full_url});
 }
 
 # Map boolean strings to ints
