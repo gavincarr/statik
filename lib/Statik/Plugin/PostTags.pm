@@ -38,7 +38,7 @@ sub post {
 # $stash->{post_tags} = $taglist;
   $stash->{post_tag_string} = join(', ', @$taglist);
   $stash->{post_tag_links} = join(', ', map {
-    qq(<a hrel="tag" href="/$tag_root/$_" title="Posts tagged '$_'">$_</a>)
+    qq(<a rel="tag" href="/$tag_root/$_" title="Posts tagged '$_'">$_</a>)
   } @$taglist);
 }
 
