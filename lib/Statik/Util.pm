@@ -25,7 +25,7 @@ sub clean_path {
   }
 
   $path =~ s!^/+!!;
-  $path =~ s{ (?<!:) //+ }{ / }x;
+  $path =~ s{ (?<!:) //+ }{/}xg;
   $path =~ s!/*$!/!;
   
   # If $arg{first} is set, include a leading '/'
