@@ -74,6 +74,7 @@ sub set_as_date {
   $self->{${key} . "date"}          = $t->date;               # %Y-%m-%d
   $self->{${key} . "time"}          = $t->time;               # %H:%M:%S
   $self->{${key} . "iso8601"}       = $t->strftime('%Y-%m-%dT%T%z');
+  $self->{${key} . "iso8601"}       =~ s/(\d{2})$/:$1/;
 
   # Set blosxom-like date elements
   $self->{${key} . "yr"}            = $t->year;               # 2011
@@ -87,6 +88,7 @@ sub set_as_date {
   $self->{${key} . "min"}           = $t->strftime('%M');     # 32
   $self->{${key} . "ampm"}          = $t->strftime('%H') >= 12 ? 'pm' : 'am';
   $self->{${key} . "utc_offset"}    = $t->strftime('%z');     # +1100
+  $self->{${key} . "utc_offset"}    =~ s/(\d{2})$/:$1/;
 
   # And some useful extras
   $self->{${key} . "mday"}          = $t->mday;               # 5
