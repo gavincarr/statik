@@ -12,6 +12,7 @@ use File::stat;
 use File::Find;
 use File::Copy qw(move);
 use DateTime::Format::Strptime;
+use DateTime::Format::RFC3339;
 use Time::Local;
 use Carp;
 
@@ -32,14 +33,20 @@ sub defaults {
     follow_symlinks                     => 0,
     # Optional flag file used to tell us about new/updated/deleted posts
     posts_flag_file                     => '',
-    # Post header to check for timestamp, overriding mtime if set
+    # Post headers to explicitly set timestamps, overriding entries_index timestamps
     post_created_timestamp_header       => 'Date',
     post_modified_timestamp_header      => 'DateModified',
-    # Post timestamp strptime(1) format (required if post_created_timestamp_header
-    # and/or post_modified_timestamp_header is set)
-    post_timestamp_format               => '%Y-%m-%d',
     # Update posts to add missing timestamp headers (requires write access to posts)
+    # Note that setting this means you must maintain both post_created_timestamp_header
+    # and post_modified_timestamp_header headers in all posts, since file mtime cannot be
+    # trusted any more (it might be changed by us adding missing timestamp headers)
     post_add_missing_timestamp_headers  => 0,
+    # Post timestamp strptime(1) format. Only required if you wish to set
+    # post_created_timestamp_header or post_modified_timestamp_header headers by hand,
+    # and are using a format other than RFC3339. If set, statik always tries both this
+    # format and RFC3339, so you can use either or both. post_add_missing_timestamp_headers
+    # headers are always added in RFC3339 format.
+    post_timestamp_format               => '',
   };
 }
 
@@ -48,11 +55,15 @@ sub defaults {
 # Sanity check config
 sub start {
   my $self = shift;
-  $self->_die("post_add_missing_timestamp_headers option requires post_created_timestamp_header, post_modified_timestamp_header and post_timestamp_format set\n")
+
+  $self->_die("post_add_missing_timestamp_headers option requires post_created_timestamp_header and post_modified_timestamp_header set\n")
     if $self->{post_add_missing_timestamp_headers} &&
       (! $self->{post_created_timestamp_header} ||
-       ! $self->{post_modified_timestamp_header} ||
-       ! $self->{post_timestamp_format});
+       ! $self->{post_modified_timestamp_header});
+
+  $self->{strp} = DateTime::Format::Strptime->new( pattern => $self->{post_timestamp_format} )
+    if $self->{post_timestamp_format};
+  $self->{rfc3} = DateTime::Format::RFC3339->new;
 }
 
 # Produce a new hash of file path => post timestamps
@@ -68,6 +79,17 @@ sub _map_canonical_timestamps {
   }
 
   return $map;
+}
+
+# Parse $timestamp string, trying both post_timestamp_format (if set), and RFC3339.
+# Return a datetime object for the timestamp if successful, or undef if not.
+sub _parse_header_timestamp {
+  my ($self, $timestamp) = @_;
+
+  my $dt = $self->{strp}->parse_datetime($timestamp) if $self->{strp};
+  $dt ||= $self->{rfc3}->parse_datetime($timestamp);
+
+  return $dt;
 }
 
 # Entries hook - returns one hashref of post files => canonical mtime,
@@ -220,19 +242,16 @@ sub entries
       -f $file or next;
 
       my $post = $post_factory->fetch( path => $file );
-      my $strp = DateTime::Format::Strptime->new(
-        pattern => $self->{post_timestamp_format},
-      );
-      my ($timestamp, $t, $modified_ts_header);
+      my ($timestamp, $dt, $modified_ts_header);
       if ($timestamp = $post->{headers}->{$created_ts_header} and
-          $t = $strp->parse_datetime($timestamp)) {
+          $dt = $self->_parse_header_timestamp($timestamp)) {
         # Record header_created_ts as epoch of post_created_timestamp_header
-        $self->{posts}->{$file}->{header_created_ts} = $t->epoch;
+        $self->{posts}->{$file}->{header_created_ts} = $dt->epoch;
         if ($modified_ts_header = $self->{post_modified_timestamp_header} and
             $timestamp = $post->{headers}->{$modified_ts_header} and
-            $t = $strp->parse_datetime($timestamp)) {
+            $dt = $self->_parse_header_timestamp($timestamp)) {
           # Record header_modified_ts as epoch of post_modified_timestamp_header
-          $self->{posts}->{$file}->{header_modified_ts} = $t->epoch;
+          $self->{posts}->{$file}->{header_modified_ts} = $dt->epoch;
         }
       }
       elsif ($self->{post_add_missing_timestamp_headers}) {
@@ -317,17 +336,19 @@ To configure, add a section like the following to your statik.conf file
     # Optional flag file (or directory) updated by user on new/updated/deleted posts
     #posts_flag_file                        =
 
-    # Post header to check for timestamp, overriding mtime if set
+    # Post headers to explicitly set timestamps, overriding entries_index timestamps
     #post_created_timestamp_header          = Date
-
-    # Post header to check for timestamp, overriding mtime if set
     #post_modified_timestamp_header         = DateModified
-
-    # Post timestamp strptime(1) format (required if post_created_timestamp_header is set)
-    #post_timestamp_format                  = %Y-%m-%d
 
     # Update posts to add missing timestamp headers (requires write access to posts)
     #post_add_missing_timestamp_headers     = 0
+
+    # Post timestamp strptime(1) format. Only required if you wish to set
+    # post_created_timestamp_header or post_modified_timestamp_header headers by hand,
+    # and are using a format other than RFC3339. If set, statik always tries both this
+    # format and RFC3339, so you can use either or both. post_add_missing_timestamp_headers
+    # headers are always added in RFC3339 format.
+    #post_timestamp_format                  =
 
 =head1 DESCRIPTION
 
