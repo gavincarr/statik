@@ -11,8 +11,8 @@ use strict;
 use File::stat;
 use File::Find;
 use File::Copy qw(move);
+use DateTime::Format::Strptime;
 use Time::Local;
-use Time::Piece;
 use Carp;
 
 use Statik::PostMutator;
@@ -36,7 +36,7 @@ sub defaults {
     post_created_timestamp_header       => 'Date',
     post_modified_timestamp_header      => 'DateModified',
     # Post timestamp strptime(1) format (required if post_created_timestamp_header
-    # and/or post_modified_timstamp_header is set)
+    # and/or post_modified_timestamp_header is set)
     post_timestamp_format               => '%Y-%m-%d',
     # Update posts to add missing timestamp headers (requires write access to posts)
     post_add_missing_timestamp_headers  => 0,
@@ -220,14 +220,17 @@ sub entries
       -f $file or next;
 
       my $post = $post_factory->fetch( path => $file );
+      my $strp = DateTime::Format::Strptime->new(
+        pattern => $self->{post_timestamp_format},
+      );
       my ($timestamp, $t, $modified_ts_header);
       if ($timestamp = $post->{headers}->{$created_ts_header} and
-          $t = eval { Time::Piece->strptime($timestamp, $self->{post_timestamp_format}) } ) {
+          $t = $strp->parse_datetime($timestamp)) {
         # Record header_created_ts as epoch of post_created_timestamp_header
         $self->{posts}->{$file}->{header_created_ts} = $t->epoch;
         if ($modified_ts_header = $self->{post_modified_timestamp_header} and
             $timestamp = $post->{headers}->{$modified_ts_header} and
-            $t = eval { Time::Piece->strptime($timestamp, $self->{post_timestamp_format}) } ) {
+            $t = $strp->parse_datetime($timestamp)) {
           # Record header_modified_ts as epoch of post_modified_timestamp_header
           $self->{posts}->{$file}->{header_modified_ts} = $t->epoch;
         }

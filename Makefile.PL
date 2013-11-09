@@ -11,14 +11,16 @@ build_requires  'Test::More' => 0.88;
 build_requires  'Test::Differences';
 build_requires  'Test::Files';
 
-requires        'parent';
 requires        'Config::Tiny';
+requires        'DateTime';
+requires        'DateTime::Format::Strptime';
+requires        'DateTime::Format::RFC3339';
 requires        'Encode';
 requires        'Exporter::Lite';
-requires        'JSON';
 requires        'Hash::Merge';
+requires        'JSON';
+requires        'parent';
 requires        'Text::MicroMason';
-requires        'Time::Piece';
 requires        'URI';
 
 install_script  'bin/statik';

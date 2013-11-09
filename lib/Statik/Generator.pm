@@ -6,7 +6,6 @@ use File::Copy qw(move);
 use File::stat;
 use File::Basename;
 use File::Path qw(make_path);
-use Time::Piece;
 
 use Statik::Stash;
 use Statik::Util qw(clean_path);

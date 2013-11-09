@@ -1,6 +1,7 @@
 package Statik::Stash;
 
 use strict;
+use DateTime;
 use Carp;
 use Statik::Util qw(clean_path);
 
@@ -55,14 +56,14 @@ sub set_as_path {
   $self->{$key} = clean_path($value);
 }
 
-# Set the value of $key to $value (must be epoch seconds or a Time::Piece
+# Set the value of $key to $value (must be epoch seconds or a DateTime
 # object), and also derive and store various other date elements from it
 sub set_as_date {
   my ($self, $key, $value) = @_;
-  die "Invalid date value '$value' for '$key' - not seconds or Time::Piece object\n"
-    unless $value =~ /^\d+$/ or (ref $value && $value->isa('Time::Piece'));
+  die "Invalid date value '$value' for '$key' - not seconds or DateTime object\n"
+    unless $value =~ /^\d+$/ or (ref $value && $value->isa('DateTime'));
 
-  my $t = ref $value ? $value : Time::Piece->strptime($value, '%s');
+  my $t = ref $value ? $value : DateTime->from_epoch(epoch => $value);
 
   if ($key) {
     $self->{$key} = $t;
@@ -71,17 +72,17 @@ sub set_as_date {
 
   # Set some generally useful date elements
   $self->{${key} . "epoch"}         = $t->epoch;
-  $self->{${key} . "date"}          = $t->date;               # %Y-%m-%d
-  $self->{${key} . "time"}          = $t->time;               # %H:%M:%S
+  $self->{${key} . "date"}          = $t->ymd;                # %Y-%m-%d
+  $self->{${key} . "time"}          = $t->hms;                # %H:%M:%S
   $self->{${key} . "iso8601"}       = $t->strftime('%Y-%m-%dT%T%z');
   $self->{${key} . "iso8601"}       =~ s/(\d{2})$/:$1/;
 
   # Set blosxom-like date elements
   $self->{${key} . "yr"}            = $t->year;               # 2011
   $self->{${key} . "mo_num"}        = $t->strftime('%m');     # 02
-  $self->{${key} . "mo"}            = $t->month;              # Feb
+  $self->{${key} . "mo"}            = $t->month_abbr;         # Feb
   $self->{${key} . "da"}            = $t->strftime('%d');     # 05
-  $self->{${key} . "dw"}            = $t->day;                # Sat
+  $self->{${key} . "dw"}            = $t->day_abbr;           # Sat
   $self->{${key} . "ti"}            = $t->strftime('%H:%M');  # 13:32
   $self->{${key} . "hr"}            = $t->strftime('%H');     # 13
   $self->{${key} . "hr12"}          = $t->strftime('%H')%12;  # 1
@@ -91,9 +92,9 @@ sub set_as_date {
   $self->{${key} . "utc_offset"}    =~ s/(\d{2})$/:$1/;
 
   # And some useful extras
-  $self->{${key} . "mday"}          = $t->mday;               # 5
-  $self->{${key} . "fullmonth"}     = $t->fullmonth;          # February
-  $self->{${key} . "fullday"}       = $t->fullday;            # Saturday
+  $self->{${key} . "mday"}          = $t->day;                # 5
+  $self->{${key} . "fullmonth"}     = $t->month_name;         # February
+  $self->{${key} . "fullday"}       = $t->day_name;           # Saturday
 
   # For blosxom-compatibility and simplicity, also set un-prefixed versions
   # of all post_created timestamps e.g. qw(dw da mo mo_num yr ti date time)
@@ -153,7 +154,7 @@ Statik::Stash - stash class used for passing statik variables through to templat
   $stash->set(myplugin_topic => 'Hello World!');
 
   # The set_as_date() method also exists, which expects an epoch seconds
-  # or Time::Piece value, and adds an additional set of derived variables.
+  # or DateTime value, and adds an additional set of derived variables.
   # The following adds 'foo_started', 'foo_started_date', 'foo_started_time',
   # and many more. See L<set_as_date()> below for details.
   $stash->set_as_date(foo_started => localtime);
@@ -315,8 +316,8 @@ value (removing leading '/' characters, and adding a trailing '/').
 =item set_as_date(variable => value)
 
 set_as_date is an alternative setter specifically for datetimes, that
-accepts only values that are epoch seconds or Time::Piece objects. It
-stores the value in the stash as a Time::Piece object, and additionally
+accepts only values that are epoch seconds or DateTime objects. It
+stores the value in the stash as a DateTime object, and additionally
 stores a whole series of derived entries, named with suffixes appended
 to $variable. For instance, if variable was 'index_updated', the derived
 entries would look like 'index_updated_epoch', 'index_updated_date',

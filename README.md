@@ -9,17 +9,19 @@ webserver like apache or nginx.
 
 No databases or dynamic web infrastructure are required, meaning you
 can host your blog on a simple vps and still have it perform like a star
-when you're slashdotted. The only real requirements are perl >= 5.10, and
-a few perl modules from CPAN:
+when you're slashdotted. The only real requirements are perl >= 5.06, and
+the following perl modules from CPAN:
 
-- parent
 - Config::Tiny
+- DateTime
+- DateTime::Format::Strptime
+- DateTime::Format::RFC3339
 - Encode
 - Exporter::Lite
-- JSON
 - Hash::Merge
+- JSON
+- parent
 - Text::MicroMason
-- Time::Piece
 - URI
 
 Dynamic content, like comments and comment threads, are possible

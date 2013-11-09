@@ -21,16 +21,18 @@ no_index:
     - t
     - themes
 requires:
+  perl: 5.6.0
   Config::Tiny: 0
+  DateTime: 0
+  DateTime::Format::Strptime: 0
+  DateTime::Format::RFC3339: 0
   Encode: 0
   Exporter::Lite: 0
   Hash::Merge: 0
   JSON: 0
-  Text::MicroMason: 0
-  Time::Piece: 0
-  URI: 0
   parent: 0
-  perl: 5.6.0
+  Text::MicroMason: 0
+  URI: 0
 resources:
   license: http://dev.perl.org/licenses/
 version: 0.01

@@ -3,7 +3,7 @@ package Statik::Test::Util;
 use strict;
 use warnings;
 use Exporter::Lite;
-use Time::Piece;
+use DateTime::Format::Strptime;
 use File::Spec;
 use File::stat;
 
@@ -16,11 +16,15 @@ sub check_timestamps {
   my ($dir, $strptime) = @_;
   $strptime ||= '%Y-%m-%dT%T';
 
+  my $strp = DateTime::Format::Strptime->new(
+    pattern     => $strptime,
+    on_error    => 'croak',
+  );
+
   for my $ts_file (glob("$dir/timestamp.*")) {
     next unless -l $ts_file;
     (my $ts = $ts_file) =~ s!^$dir/timestamp\.!!;
-    my $t = Time::Piece->strptime($ts, $strptime)
-      or die "strptime('$ts', '$strptime') failed: $!";
+    my $t = $strp->parse_datetime($ts);
 
     my $target = File::Spec->rel2abs(readlink $ts_file, $dir);
     unless (-e $target) {
