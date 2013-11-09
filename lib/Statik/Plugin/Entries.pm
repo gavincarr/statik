@@ -13,7 +13,6 @@ use File::Find;
 use File::Copy qw(move);
 use DateTime::Format::Strptime;
 use DateTime::Format::RFC3339;
-use Time::Local;
 use Carp;
 
 use Statik::PostMutator;
@@ -303,10 +302,10 @@ sub end {
       }
 
       my $post = Statik::PostMutator->new(file => $file, encoding => $self->config->{blog_encoding});
-      my $create_ts = localtime($create_mtime)->strftime($self->{post_timestamp_format});
-      my $modify_ts = localtime($modify_mtime)->strftime($self->{post_timestamp_format});
-      $post->add_header($self->{post_created_timestamp_header} => $create_ts);
-      $post->add_header($self->{post_modified_timestamp_header} => $modify_ts);
+      my $create_ts = DateTime->from_epoch( epoch => $create_mtime);
+      my $modify_ts = DateTime->from_epoch( epoch => $modify_mtime);
+      $post->add_header($self->{post_created_timestamp_header} => $self->{rfc3}->format_datetime($create_ts));
+      $post->add_header($self->{post_modified_timestamp_header} => $self->{rfc3}->format_datetime($modify_ts));
       $post->write;
     }
   }
