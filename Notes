@@ -1,0 +1,33 @@
+
+Hook Notes
+----------
+
+* Startup hooks:
+- start - called once at plugin instantiation time, useful for setup [all]
+- template - called once to load flavour templates [first]
+- interpolate - returns a sub to do interpolation on a $template with the values in $stash [first?]
+
+* Entries hooks:
+- entries - returns the entire list of posts, and the subset of those posts that are new or updated [first]
+- sort - returns a subroutine to sort the entries list (default: reverse chronological) [first]
+- filter - tweaks the entries list in various ways
+- paths - given the full and updated entries lists, return a hashref whose keys are the set of (relative)
+  paths for which we need to generate updated pages, and whose values are the (fully-qualified) set of
+  post paths corresponding to the path of the key
+
+- paginate - given the full and updated entries lists, updates the set of
+  relative path paths to generate pages for (the page_paths arrayref) [all? first?]
+
+* Page hooks:
+- head - called once per page, allowing a plugin to set/modify any non-post-specific variables in the stash
+    before header interpolation is done, or update the header template [all]
+- date - called once for each new day per page, allowing a plugin to set/modify any date-specific variables
+    in the stash, or update the date template [all]
+- post - called once for each post per page, allowing a plugin to set/modify any post-specific variables in
+    the stash, or update the post template [all]
+- foot - called once per page, allowing a plugin to set/modify any non-post-specific variables in the stash
+    befor footer interpolation is done, or update the footer template [all]
+
+* Shutdown hooks:
+- end - called just before shutdown, useful for any cleanups
+

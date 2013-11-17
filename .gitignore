@@ -11,5 +11,6 @@ Build.bat
 MANIFEST.bak
 MYMETA.*
 DevNotes
+TODO
 t/*/generated/*
 t/*/state/*
