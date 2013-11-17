@@ -33,7 +33,7 @@ sub paths {
 
   # Collect constituent path segments from updated paths
   my $post_dir = $self->config->{post_dir};
-  my $rendering_posts = @{$self->config->{post_flavours}};
+  my $rendering_posts = @{$self->config->{post_flavours}} > 0;
   my @paths = ( '' );
   my %paths = ();
   my %done = ( '' => 1 );

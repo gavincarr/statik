@@ -67,7 +67,7 @@ sub paths {
     or die "Required argument 'updates' missing";
 
   my @updates = sort keys %$updates or return;
-  printf "+ Generating updated tag paths for %d updated posts\n",
+  printf "+ Generating updated tag paths for %d updated post(s)\n",
     scalar @updates
       if $self->options->{verbose};
 
@@ -81,7 +81,8 @@ sub paths {
     my $post = $posts->fetch(path => $path);
     my $tag_header = $post->header($self->{tag_header}) or next;
     my $new_post = not exists $cache->{entries_tags}->{$path};
-    my @old_tags = sort uniq split /\s*,\s*/, $cache->{entries_tags}->{$path}->{tags} if ! $new_post;
+#   my @old_tags = sort uniq split /\s*,\s*/, $cache->{entries_tags}->{$path}->{tags} if ! $new_post;
+    my @old_tags = sort uniq split /\s*,\s*/, $cache->{entries_tags}->{$path} if ! $new_post;
     my @new_tags = sort uniq split /\s*,\s*/, $tag_header;
     next unless @new_tags or @old_tags;
     (my $rel_path = $path) =~ s!^ $config->{post_dir} /!!x
