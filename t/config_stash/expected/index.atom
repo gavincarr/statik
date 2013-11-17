@@ -3,7 +3,7 @@
   <title>My Bløg</title>
   <subtitle></subtitle>
   <link href="/"/>
-  <updated>2011-01-05T10:03:00+00:00</updated>
+  <updated>2011-01-05T10:03:00Z</updated>
   <author>
     <name>Jane Author</name>
   </author>
@@ -13,30 +13,30 @@
     <title>Post the fifth</title>
     <link href="/sub2/fifth"/>
     <id>tag:example.com,2011-01-05:/sub2/fifth</id>
-    <updated>2011-01-05T10:03:00+00:00</updated>
+    <updated>2011-01-05T10:03:00Z</updated>
   </entry>
   <entry>
     <title>Post the fourth</title>
     <link href="/fourth"/>
     <id>tag:example.com,2011-01-04:/fourth</id>
-    <updated>2011-01-04T14:15:16+00:00</updated>
+    <updated>2011-01-04T14:15:16Z</updated>
   </entry>
   <entry>
     <title>Post the third</title>
     <link href="/third"/>
     <id>tag:example.com,2011-01-03:/third</id>
-    <updated>2011-01-03T20:20:20+00:00</updated>
+    <updated>2011-01-03T20:20:20Z</updated>
   </entry>
   <entry>
     <title>Post the second</title>
     <link href="/sub1/second"/>
     <id>tag:example.com,2011-01-02:/sub1/second</id>
-    <updated>2011-01-02T08:30:00+00:00</updated>
+    <updated>2011-01-02T08:30:00Z</updated>
   </entry>
   <entry>
     <title>Post the first</title>
     <link href="/first"/>
     <id>tag:example.com,2011-01-01:/first</id>
-    <updated>2011-01-01T12:00:00+00:00</updated>
+    <updated>2011-01-01T12:00:00Z</updated>
   </entry>
 </feed>

@@ -3,7 +3,7 @@
 <title>$blog_title</title> 
 <subtitle>$blog_description</subtitle> 
 <link href="$url$path"/>
-<updated>$index_updated_iso8601</updated>
+<updated>$index_updated_rfc3339</updated>
 <author>
   <name>$author_name</name>
   <uri>$author_url</uri>

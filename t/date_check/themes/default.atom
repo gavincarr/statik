@@ -4,7 +4,7 @@
   <title>$blog_title_esc</title>
   <subtitle>$blog_description_esc</subtitle>
   <link href="$url$path"/>
-  <updated>$index_updated_iso8601</updated>
+  <updated>$index_updated_rfc3339</updated>
   <author>
     <name>$author_name_esc</name>
   </author>
@@ -16,7 +16,7 @@
     <title>$header_title_esc</title>
     <link href="$url$post_path$post_filename"/>
     <id>tag:$blog_id_domain,$post_created_date:$url_path$post_path$post_filename</id>
-    <updated>$post_updated_iso8601</updated>
+    <updated>$post_updated_rfc3339</updated>
   </entry>
 
 <!-- statik foot -->

@@ -2,6 +2,7 @@ package Statik::Stash;
 
 use strict;
 use DateTime;
+use DateTime::Format::RFC3339;
 use Carp;
 use Statik::Util qw(clean_path);
 
@@ -29,6 +30,7 @@ sub new {
 # my $fconfig = $config->flavour($self->{flavour});
 # $self->{flavour_suffix} = $fconfig->{suffix};
   $self->{flavour_suffix} = $self->{flavour};
+  $self->{_rfc3339} = DateTime::Format::RFC3339->new;
 
   my %stash = $config->to_stash;
   @$self{ keys %stash } = values %stash;
@@ -74,8 +76,7 @@ sub set_as_date {
   $self->{${key} . "epoch"}         = $t->epoch;
   $self->{${key} . "date"}          = $t->ymd;                # %Y-%m-%d
   $self->{${key} . "time"}          = $t->hms;                # %H:%M:%S
-  $self->{${key} . "iso8601"}       = $t->strftime('%Y-%m-%dT%T%z');
-  $self->{${key} . "iso8601"}       =~ s/(\d{2})$/:$1/;
+  $self->{${key} . "rfc3339"}       = $self->{_rfc3339}->format_datetime($t);
 
   # Set blosxom-like date elements
   $self->{${key} . "yr"}            = $t->year;               # 2011
@@ -321,7 +322,7 @@ stores the value in the stash as a DateTime object, and additionally
 stores a whole series of derived entries, named with suffixes appended
 to $variable. For instance, if variable was 'index_updated', the derived
 entries would look like 'index_updated_epoch', 'index_updated_date',
-'index_updated_iso8601', etc.
+'index_updated_rfc3339', etc.
 
 The core set of derived entries are:
 
@@ -335,7 +336,7 @@ The datetime in epoch seconds.
 
 =item ${variable}_time
 
-=item ${variable}_iso8601
+=item ${variable}_rfc3339
 
 =item ${variable}_yr
 

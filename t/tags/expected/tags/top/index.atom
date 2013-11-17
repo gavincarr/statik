@@ -3,7 +3,7 @@
   <title>My Bløg</title>
   <subtitle>Mutterings from the &lt;dungeon&gt;</subtitle>
   <link href="http://example.com/testblog/tags/top/"/>
-  <updated>2011-01-04T14:15:16+00:00</updated>
+  <updated>2011-01-04T14:15:16Z</updated>
   <author>
     <name>Jane Author</name>
   </author>
@@ -13,18 +13,18 @@
     <title>Post the fourth</title>
     <link href="http://example.com/testblog/fourth"/>
     <id>tag:example.com,2011-01-04:/testblog/fourth</id>
-    <updated>2011-01-04T14:15:16+00:00</updated>
+    <updated>2011-01-04T14:15:16Z</updated>
   </entry>
   <entry>
     <title>Post the third</title>
     <link href="http://example.com/testblog/third"/>
     <id>tag:example.com,2011-01-03:/testblog/third</id>
-    <updated>2011-01-03T20:20:20+00:00</updated>
+    <updated>2011-01-03T20:20:20Z</updated>
   </entry>
   <entry>
     <title>Post the first</title>
     <link href="http://example.com/testblog/first"/>
     <id>tag:example.com,2011-01-01:/testblog/first</id>
-    <updated>2011-01-01T12:00:00+00:00</updated>
+    <updated>2011-01-01T12:00:00Z</updated>
   </entry>
 </feed>

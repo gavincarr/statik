@@ -3,7 +3,7 @@
   <title>My Bløg</title>
   <subtitle></subtitle>
   <link href="/sub1/"/>
-  <updated>2011-01-02T08:30:00+00:00</updated>
+  <updated>2011-01-02T08:30:00Z</updated>
   <author>
     <name>Jane Author</name>
   </author>
@@ -13,6 +13,6 @@
     <title>Post the second</title>
     <link href="/sub1/second"/>
     <id>tag:example.com,2011-01-02:/sub1/second</id>
-    <updated>2011-01-02T08:30:00+00:00</updated>
+    <updated>2011-01-02T08:30:00Z</updated>
   </entry>
 </feed>
