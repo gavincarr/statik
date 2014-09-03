@@ -81,14 +81,14 @@ sub paths {
     my $post = $posts->fetch(path => $path);
     my $tag_header = $post->header($self->{tag_header}) or next;
     my $new_post = not exists $cache->{entries_tags}->{$path};
-#   my @old_tags = sort uniq split /\s*,\s*/, $cache->{entries_tags}->{$path}->{tags} if ! $new_post;
-    my @old_tags = sort uniq split /\s*,\s*/, $cache->{entries_tags}->{$path} if ! $new_post;
-    my @new_tags = sort uniq split /\s*,\s*/, $tag_header;
+    my @old_tags = sort(uniq(split /\s*,\s*/, $cache->{entries_tags}->{$path})) if ! $new_post;
+    my @new_tags = sort(uniq(split /\s*,\s*/, $tag_header));
     next unless @new_tags or @old_tags;
     (my $rel_path = $path) =~ s!^ $config->{post_dir} /!!x
       if $self->options->{verbose};
 
     $cache->{entries_tags}->{$path} = $tag_header;
+    # If a new post, add tags to tag cache
     if ($new_post) {
       printf "++ %s not in tag cache, adding %d tags\n", $rel_path, scalar @new_tags
         if $self->options->{verbose} && ! $self->options->{force};
