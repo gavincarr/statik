@@ -7,7 +7,7 @@ package Statik::Plugin::Markdown;
 
 use strict;
 use parent qw(Statik::Plugin);
-use Text::Markdown qw(markdown);
+use Text::MultiMarkdown qw(markdown);
 
 # -------------------------------------------------------------------------
 # Configuration defaults. To change, add a [Statik::Plugin::Markdown]
@@ -26,10 +26,6 @@ sub defaults {
 
 sub start {
   my $self = shift;
-  $self->{markup} = Text::Markdown->new(
-    empty_element_suffix => '>',
-    tab_width => 0,
-  ) or die "Text::Markdown instantiation failed: $!";
 }
 
 sub post {
@@ -45,7 +41,7 @@ sub post {
 sub _munge_template {
   my ($self, %arg) = @_;
   my $template_ref = $arg{template};
-  $$template_ref = markdown $$template_ref;
+  $$template_ref = markdown($$template_ref, { empty_element_suffix => '>' });
 }
 
 1;
@@ -59,7 +55,7 @@ Statik::Plugin::Markdown - adds support for posts written in markdown
 =head1 DESCRIPTION
 
 Statik::Plugin::Markdown - adds support for posts formatted in markdown,
-using the Text::Markdown perl module.
+using the Text::MultiMarkdown perl module.
 
 =head1 CONFIGURATION
 
@@ -73,7 +69,7 @@ To configure, add a section like the following to your statik.conf file
 
 =head1 SEE ALSO
 
-L<Text:::Markdown>
+L<Text:::MultiMarkdown>
 
 =head1 AUTHOR
 
@@ -81,7 +77,7 @@ Gavin Carr <gavin@openfusion.com.au>, http://www.openfusion.net/
 
 =head1 LICENCE
 
-Copyright 2011-2013, Gavin Carr.
+Copyright 2011-2014, Gavin Carr.
 
 This software is free software, licensed under the same terms as perl itself.
 
