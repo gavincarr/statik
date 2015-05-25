@@ -85,8 +85,15 @@ sub _map_canonical_timestamps {
 sub _parse_header_timestamp {
   my ($self, $timestamp) = @_;
 
-  my $dt = $self->{strp}->parse_datetime($timestamp) if $self->{strp};
-  $dt ||= $self->{rfc3}->parse_datetime($timestamp);
+  my $dt;
+  if ($self->{strp}) {
+    $dt = $self->{strp}->parse_datetime($timestamp)
+      or die "Incorrectly formatted timestamp '$timestamp' (not post_timestamp_format '$self->{post_timestamp_format}'";
+  }
+  else {
+    $dt = eval { $self->{rfc3}->parse_datetime($timestamp) }
+      or die "Incorrectly formatted timestamp '$timestamp' (not RFC3339)";
+  }
 
   return $dt;
 }
