@@ -120,7 +120,7 @@ sub entries
 
   # Read entries_index data
   if ($self->{index_file} && -f $self->{index_file}) {
-    if (open my $fh, $self->{index_file})  {
+    if (open my $fh, '<', $self->{index_file})  {
       my $index_data = eval { local $/ = undef; $self->json->decode(<$fh>) };
       if ($@) {
         $self->_die("Error: loading entries index '$self->{entries_index}' failed: $@\n");
