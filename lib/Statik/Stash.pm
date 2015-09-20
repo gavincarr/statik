@@ -241,7 +241,7 @@ mtime of the newest post in the current collection.
 
 =back
 
-Statik sets the following stash variables for 'post' hooks:
+Statik sets the following stash variables for 'date' and 'post' hooks:
 
 =over 4
 
@@ -276,6 +276,10 @@ header, or from the earliest mtime seen by Statik for this post).
 
 A set of datetime variables (see L<set_as_date> below) representing the
 current mtime of this post.
+
+=item post_num
+
+The number of this post (beginning at 1) within the page.
 
 =item header_XXX
 

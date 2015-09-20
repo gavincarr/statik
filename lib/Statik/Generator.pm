@@ -264,6 +264,7 @@ sub _generate_page {
   # Process posts
   my $current_date = '';
   for (my $i = 0; $i <= $#$post_fullpaths; $i++) {
+    $stash->set(post_num => $i+1);
     my ($date_output, $post_output);
     ($date_output, $post_output, $current_date) = $self->_generate_post(
       post_fullpath => $post_fullpaths->[$i],
@@ -344,11 +345,11 @@ sub _generate_post {
   # Date hook
   my $date_output;
   if ($stash->{post_created_date} ne $current_date) {
+    $stash->set(date_break => 1);
     my $date_tmpl = $template_sub->( chunk => 'date', flavour => $flavour, theme => $theme );
     $self->{plugins}->call_all( 'date', template => \$date_tmpl, stash => $stash );
     $stash->xml_escape_text;
     $date_output = $self->{interpolate_sub}->( template => $date_tmpl, stash => $stash );
-    $stash->set(date_break => 1);
   }
   else {
     $stash->set(date_break => 0);
