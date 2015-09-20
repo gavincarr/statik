@@ -1,7 +1,7 @@
 <!-- statik head -->
 <?xml version="1.0" encoding="$blog_encoding"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
-  <title>$blog_title_esc</title>
+  <title>$feed_title_esc</title>
   <subtitle>$blog_description_esc</subtitle>
   <link rel="self" href="$full_url$path"/>
   <updated>$index_updated_rfc3339</updated>

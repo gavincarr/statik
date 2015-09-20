@@ -14,12 +14,16 @@ use Statik::Util qw(clean_path);
 
 my @main_required    = qw(blog_title author_name blog_id_year full_url);
 my %main_booleans    = map { $_ => 1 } qw(show_future_entries);
+# Fields that default to other field values
+my %main_dependent_defaults = (
+  feed_title    => 'blog_title',
+);
 my %flavour_defaults = (
   html => {
-    theme         => 'default',
+    theme       => 'default',
   },
   atom => {
-    theme         => 'default',
+    theme       => 'default',
   },
 );
 
@@ -68,8 +72,19 @@ sub new {
   $self->_qualify_paths;
   $self->_map_booleans;
   $self->_clean_flavours;
+  $self->_default_dependent_fields;
 
   $self;
+}
+
+# Default dependent fields
+sub _default_dependent_fields {
+  my $self = shift;
+  while (my ($dependent, $field) = each %main_dependent_defaults) {
+    if (! defined $self->{ $dependent } && defined $self->{ $field }) {
+      $self->{ $dependent } = $self->{ $field };
+    }
+  }
 }
 
 # Check all required fields are set
