@@ -29,8 +29,8 @@ sub new {
     my $stash = delete $arg{stash};
 
     # Interpolate simple $name or ${name} variables if found in stash
-    $template =~ s/(?<!\\) \$ \{? (\w+) \}? \n?
-                  /defined $stash->{$1} ? $stash->{$1} : ''/gex;
+    $template =~ s/(?<!\\) ( \$ \{? (\w+) \}? ) \n?
+                  /defined $stash->{$2} ? $stash->{$2} : $1/gex;
 
     return $template;
   };
