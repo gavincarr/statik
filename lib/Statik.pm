@@ -2,6 +2,7 @@ package Statik;
 
 use strict;
 use JSON;
+use File::Basename;
 use Carp;
 
 use FindBin qw($Bin);
@@ -74,7 +75,11 @@ sub generate {
   # TODO: hookify
   my $sort_sub = sub {
     my ($entries) = @_;
-    return sort { $entries->{$b}->{create_ts} <=> $entries->{$a}->{create_ts} } keys %$entries;
+    return sort {
+      $entries->{$b}->{create_ts} <=> $entries->{$a}->{create_ts} or
+      basename($a) cmp basename($b) or
+      $a cmp $b
+    } keys %$entries;
   };
   my @entries_list = $sort_sub->( $entries );
 
