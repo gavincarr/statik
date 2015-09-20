@@ -93,10 +93,15 @@ sub _munge_template {
     ); 
   };
   if ($@) {
+    my $extra = '';
+    # For post errors, include the post filename for debugging
+    if ($hook eq 'post') {
+      $extra = ", post $stash->{post_filename}";
+    }
     # Text::MicroMason's errors are awful - truncate to the first line
     my @lines = split /\n/, $@;
 #   $self->_warn("template_ref:\n$args_section$$template_ref\n");
-    $self->_die("$hook template error: $lines[0]\n");
+    $self->_die("$hook template error$extra: $lines[0]\n");
   }
   else {
     # Trim trailing whitespace

@@ -15,6 +15,7 @@ my $stash = {
   post_author_name  => 'G M Carr',
   post_author_url   => 'http://openfusion.net/',
   post_author_email => 'gavin@openfusion.net',
+  post_filename     => 'broken.txt',
 };
 
 (my $test_base = basename $0) =~ s!^\d+_!!;

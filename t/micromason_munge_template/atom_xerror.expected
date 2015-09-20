@@ -1,1 +1,1 @@
-[Statik::Plugin::MicroMason] post template error: MicroMason compilation failed: Missing right curly or square bracket at text template
+[Statik::Plugin::MicroMason] post template error, post broken.txt: MicroMason compilation failed: Missing right curly or square bracket at text template
