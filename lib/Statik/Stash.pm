@@ -131,9 +131,10 @@ sub _xml_escape_string {
 sub xml_escape_text {
   my $self = shift;
 
-  while (my ($key, $value) = each %$self) {
+  for my $key (keys %$self) {
     next if $key =~ m/^_/;
     next if $key =~ m/_esc$/;
+    my $value = $self->{$key};
     next if ! $value;
     next if ref $value;
     next if $value =~ m/^\d+$/;
