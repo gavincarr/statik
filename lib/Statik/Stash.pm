@@ -67,6 +67,10 @@ sub set_as_date {
 
   my $t = ref $value ? $value : DateTime->from_epoch(epoch => $value);
 
+  if ($self->{blog_timezone} && $self->{blog_timezone} !~ /^(UTC|\+00:?00)$/) {
+    $t->set_time_zone( $self->{blog_timezone} );
+  }
+
   if ($key) {
     $self->{$key} = $t;
     $key .= '_';

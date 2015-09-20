@@ -40,6 +40,9 @@
 # Blog text encoding
 #blog_encoding = utf-8
 
+# Blog timezone (in any format DateTime::set_time_zone understands, for converting epoch datetimes for output)
+#blog_timezone = UTC
+
 # Base URL for the blog, generally safe to leave just a path, which lets links work
 # with relative URLs in staging contexts
 #url = /

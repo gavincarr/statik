@@ -29,10 +29,10 @@ sub new {
 
   # Defaults
   my $self = bless { 
-    _file                   => $arg{file} || 
-      File::Spec->catfile($Bin, File::Spec->updir, 'config', 'statik.conf'),
+    _file                   => ($arg{file} || File::Spec->catfile($Bin, File::Spec->updir, 'config', 'statik.conf')),
     blog_language           => 'en',
     blog_encoding           => 'utf-8',
+    blog_timezone           => 'UTC',
     post_dir                => 'posts',
     output_dir              => 'generated',
     state_dir               => 'state',
