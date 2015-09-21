@@ -6,8 +6,6 @@ use Getopt::Long::Descriptive;
 
 use FindBin qw($Bin);
 use lib "$Bin/../lib";
-# Allow local plugins
-use lib 'lib';
 use Statik;
 
 $|++;
@@ -20,7 +18,7 @@ my ($opt, $usage) = describe_options(
   [ 'path|p=s@'      => 'generate only entries for these paths' ],
   [ 'noop|n'        => "don't do updates, just show what would be done",
                        { implies => { verbose => 1 } } ],
-  [ 'verbose|v+'    => 'print more verbose output' ],
+  [ 'verbose|v+'    => 'print more verbose output', { default => 0 } ],
   [ 'help|h|?'      => 'print usage message and exit' ],
 );
 print($usage->text), exit if $opt->help;
@@ -31,7 +29,7 @@ my $statik = Statik->new(
   force     => $opt->force,
   path      => $opt->path,
   noop      => $opt->noop,
-  verbose   => $opt->verbose || 0,
+  verbose   => $opt->verbose,
 );
 
 $statik->generate;
@@ -68,7 +66,7 @@ Gavin Carr <gavin@openfusion.com.au>
 
 =head1 COPYRIGHT AND LICENCE
 
-Copyright (C) Gavin Carr 2011-2013.
+Copyright (C) Gavin Carr 2011-2015.
 
 This library is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself, either Perl version 5.8.0 or, at
