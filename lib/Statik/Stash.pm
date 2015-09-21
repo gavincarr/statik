@@ -34,6 +34,7 @@ sub new {
 
   my %stash = $config->to_stash;
   @$self{ keys %stash } = values %stash;
+  $self->xml_escape_text;
 
   $self;
 }
@@ -44,11 +45,17 @@ sub get {
   $self->{key};
 }
 
-# Set the value for $key to $value. If xml escaping is turned on, we also
-# add a "${key}_esc" version with xml-escaped content
+# Set the value for $key to $value. If $value is a string, also add a
+# "${key}_esc" version with xml-escaped content.
 sub set {
   my ($self, $key, $value) = @_;
+
   $self->{$key} = $value;
+
+  if ($key !~ m/^_/ && $key !~ m/_esc$/ && ! ref $value && $value !~ m/^\d+$/) {
+    $self->{ "${key}_esc" } = $self->_xml_escape_string($value);
+  }
+
   return $value;
 }
 
@@ -77,29 +84,31 @@ sub set_as_date {
   }
 
   # Set some generally useful date elements
-  $self->{${key} . "epoch"}         = $t->epoch;
-  $self->{${key} . "date"}          = $t->ymd;                # %Y-%m-%d
-  $self->{${key} . "time"}          = $t->hms;                # %H:%M:%S
-  $self->{${key} . "rfc3339"}       = $self->{_rfc3339}->format_datetime($t);
+  $self->set( ${key} . "epoch"          => $t->epoch );
+  $self->set( ${key} . "date"           => $t->ymd );                # %Y-%m-%d
+  $self->set( ${key} . "time"           => $t->hms );                # %H:%M:%S
+  $self->set( ${key} . "rfc3339"        => $self->{_rfc3339}->format_datetime($t) );
 
   # Set blosxom-like date elements
-  $self->{${key} . "yr"}            = $t->year;               # 2011
-  $self->{${key} . "mo_num"}        = $t->strftime('%m');     # 02
-  $self->{${key} . "mo"}            = $t->month_abbr;         # Feb
-  $self->{${key} . "da"}            = $t->strftime('%d');     # 05
-  $self->{${key} . "dw"}            = $t->day_abbr;           # Sat
-  $self->{${key} . "ti"}            = $t->strftime('%H:%M');  # 13:32
-  $self->{${key} . "hr"}            = $t->strftime('%H');     # 13
-  $self->{${key} . "hr12"}          = $t->strftime('%H')%12;  # 1
-  $self->{${key} . "min"}           = $t->strftime('%M');     # 32
-  $self->{${key} . "ampm"}          = $t->strftime('%H') >= 12 ? 'pm' : 'am';
-  $self->{${key} . "utc_offset"}    = $t->strftime('%z');     # +1100
-  $self->{${key} . "utc_offset"}    =~ s/(\d{2})$/:$1/;
+  $self->set( ${key} . "yr"             => $t->year );               # 2011
+  $self->set( ${key} . "mo_num"         => $t->strftime('%m') );     # 02
+  $self->set( ${key} . "mo"             => $t->month_abbr );         # Feb
+  $self->set( ${key} . "da"             => $t->strftime('%d') );     # 05
+  $self->set( ${key} . "dw"             => $t->day_abbr );           # Sat
+  $self->set( ${key} . "ti"             => $t->strftime('%H:%M') );  # 13:32
+  $self->set( ${key} . "hr"             => $t->strftime('%H') );     # 13
+  $self->set( ${key} . "hr12"           => $t->strftime('%H')%12 );  # 1
+  $self->set( ${key} . "min"            => $t->strftime('%M') );     # 32
+  $self->set( ${key} . "ampm"           => $t->strftime('%H') >= 12 ? 'pm' : 'am' );
+
+  my $utc_offset = $t->strftime('%z');
+  $utc_offset =~ s/(\d{2})(\d{2})$/$1:$2/;
+  $self->set( ${key} . "utc_offset"     => $utc_offset );
 
   # And some useful extras
-  $self->{${key} . "mday"}          = $t->day;                # 5
-  $self->{${key} . "fullmonth"}     = $t->month_name;         # February
-  $self->{${key} . "fullday"}       = $t->day_name;           # Saturday
+  $self->set( ${key} . "mday"           => $t->day );                # 5
+  $self->set( ${key} . "fullmonth"      => $t->month_name );         # February
+  $self->set( ${key} . "fullday"        => $t->day_name );           # Saturday
 
   # For blosxom-compatibility and simplicity, also set un-prefixed versions
   # of all post_created timestamps e.g. qw(dw da mo mo_num yr ti date time)

@@ -258,7 +258,6 @@ sub _generate_page {
   # Head hook
   my $head_tmpl = $template_sub->( chunk => 'head', flavour => $flavour, theme => $theme );
   $self->{plugins}->call_all( 'head', template => \$head_tmpl, stash => $stash );
-  $stash->xml_escape_text;
   $output .= $interpolate_sub->( template => $head_tmpl, stash => $stash );
 
   # Process posts
@@ -281,7 +280,6 @@ sub _generate_page {
   # Foot hook
   my $foot_tmpl = $template_sub->( chunk => 'foot', flavour => $flavour, theme => $theme );
   $self->{plugins}->call_all( 'foot', template => \$foot_tmpl, stash => $stash );
-  $stash->xml_escape_text;
   $output .= $interpolate_sub->( template => $foot_tmpl, stash => $stash );
 
   return $output if $output;
@@ -348,7 +346,6 @@ sub _generate_post {
     $stash->set(date_break => 1);
     my $date_tmpl = $template_sub->( chunk => 'date', flavour => $flavour, theme => $theme );
     $self->{plugins}->call_all( 'date', template => \$date_tmpl, stash => $stash );
-    $stash->xml_escape_text;
     $date_output = $self->{interpolate_sub}->( template => $date_tmpl, stash => $stash );
   }
   else {
@@ -358,7 +355,6 @@ sub _generate_post {
   # Post hook
   my $post_tmpl = $template_sub->( chunk => 'post', flavour => $flavour, theme => $theme );
   $self->{plugins}->call_all( 'post', template => \$post_tmpl, stash => $stash );
-  $stash->xml_escape_text;
   my $post_output = $self->{interpolate_sub}->( template => $post_tmpl, stash => $stash );
 
   return ($date_output, $post_output, $stash->{post_created_date});
@@ -450,7 +446,7 @@ Gavin Carr <gavin@openfusion.com.au>
 
 =head1 COPYRIGHT AND LICENCE
 
-Copyright (C) Gavin Carr 2011.
+Copyright (C) Gavin Carr 2011-2015.
 
 This library is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself, either Perl version 5.8.0 or, at
