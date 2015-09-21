@@ -14,3 +14,5 @@
 ^Build.bat$
 ^MANIFEST.bak$
 ^generated$
+^MYMETA.json
+^MYMETA.yml

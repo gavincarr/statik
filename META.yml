@@ -4,6 +4,7 @@ author:
   - 'Gavin Carr <gavin@openfusion.com.au>'
 build_requires:
   ExtUtils::MakeMaker: 6.42
+  File::Remove: 0
   Test::Differences: 0
   Test::More: 0.88
 configure_requires:
@@ -32,6 +33,7 @@ requires:
   JSON: 0
   parent: 0
   Text::MicroMason: 0
+  Tie:IxHash: 0
   URI: 0
 resources:
   license: http://dev.perl.org/licenses/
