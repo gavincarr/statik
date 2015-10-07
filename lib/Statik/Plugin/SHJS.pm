@@ -37,7 +37,7 @@ sub _munge_body {
 
   my $count = 1;
   for my $code (@code) {
-    if ($code =~ m{^\s*(#!([\w/]+)\r?\n?)}) {
+    if ($code =~ m{^\s*((?:#!|```)([\w/]+)\r?\n?)}) {
       my $code_initial = $code;
       my $snippet = $1;
       my $shebang = $2;
