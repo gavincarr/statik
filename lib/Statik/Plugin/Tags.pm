@@ -84,16 +84,17 @@ sub paths {
     my @old_tags = sort(uniq(split /\s*,\s*/, $cache->{entries_tags}->{$path})) if ! $new_post;
     my @new_tags = sort(uniq(split /\s*,\s*/, $tag_header));
     next unless @new_tags or @old_tags;
-    (my $rel_path = $path) =~ s!^ $config->{post_dir} /!!x
-      if $self->options->{verbose};
+
+    # Add all old and new tags to %tags, as all tag pages will need to be updated
+    $tags{$_} ||= 1 foreach @old_tags, @new_tags;
 
     $cache->{entries_tags}->{$path} = $tag_header;
+    (my $rel_path = $path) =~ s!^ $config->{post_dir} /!!x;
     # If a new post, add tags to tag cache
     if ($new_post) {
       printf "++ %s not in tag cache, adding %d tags\n", $rel_path, scalar @new_tags
         if $self->options->{verbose} && ! $self->options->{force};
       for my $tag (@new_tags) {
-        $tags{$tag}++;
         $cache->{tag_map}->{$tag} ||= {};
         $cache->{tag_map}->{$tag}->{$path} = 1;
         $cache->{tag_counts}->{$tag}++;
@@ -114,7 +115,6 @@ sub paths {
       # Add and remove added/deleted tags from cache
       if (@added or @deleted) {
         for my $tag (@deleted) {
-          $tags{$tag}++;
           print "+ '$tag' tag deleted from $rel_path - removing from tag cache\n"
             if $self->options->{verbose};
           delete $cache->{tag_map}->{$tag}->{$path};
@@ -123,7 +123,6 @@ sub paths {
           delete $cache->{tag_counts}->{$tag} if $cache->{tag_counts}->{$tag} == 0;
         }
         for my $tag (@added) {
-          $tags{$tag}++;
           print "+ '$tag' tag added to $rel_path - adding to tag cache\n"
             if $self->options->{verbose};
           $cache->{tag_map}->{$tag} ||= {};
